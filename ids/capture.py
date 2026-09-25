@@ -12,13 +12,10 @@ from typing import Callable
 from scapy.all import PcapReader, sniff
 from scapy.error import Scapy_Exception
 
-log = logging.getLogger(__name__)
+from ids.linktypes import (LINKTYPE_ETHERNET, LINKTYPE_LINUX_SLL,
+                           LINKTYPE_LINUX_SLL2, LINKTYPE_RAW)
 
-# Mã linktype theo chuẩn libpcap
-LINKTYPE_ETHERNET = 1
-LINKTYPE_RAW = 101          # Gói bắt đầu thẳng bằng IP header
-LINKTYPE_LINUX_SLL = 113    # Linux "cooked" capture (interface "any")
-LINKTYPE_LINUX_SLL2 = 276
+log = logging.getLogger(__name__)
 
 # Tên lớp Scapy của layer đầu tiên -> linktype (dùng cho live capture)
 _LAYER_TO_LINKTYPE = {
