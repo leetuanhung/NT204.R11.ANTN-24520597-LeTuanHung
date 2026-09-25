@@ -28,7 +28,9 @@ python -m unittest discover -v tests
 ```
 main.py              # CLI, chọn chế độ live hoặc pcap
 ids/capture.py       # Nguồn packet: live interface hoặc file PCAP -> (timestamp, raw bytes)
-ids/parsers/         # Network, Transport, Application parser
+ids/linktypes.py     # Mã linktype libpcap
+ids/parsers/network.py    # Bỏ header lớp 2, parse IPv4 (tên trường theo Wireshark ip.*)
+ids/parsers/transport.py  # Parse TCP (tên trường theo Wireshark tcp.*)
 tests/               # Unit test (unittest)
 TEST/                # Kết quả các test case
 ```
@@ -37,4 +39,4 @@ TEST/                # Kết quả các test case
 
 | Công cụ | Mục đích | Phần mã nguồn |
 |---|---|---|
-| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `main.py`, `tests/test_capture.py` |
+| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `main.py`, các file trong `tests/` |

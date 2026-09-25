@@ -3,11 +3,50 @@ import logging
 import sys
 
 from ids.capture import RawPacket, capture_live, capture_pcap
+from ids.parsers.errors import ParseError
+from ids.parsers.network import ETHERTYPE_IPV4, ETHERTYPE_NAMES, parse_ipv4, parse_link
+from ids.parsers.transport import parse_tcp
+
+IP_PROTO_TCP = 6
 
 
-def print_packet(raw: RawPacket) -> None:
-    # Tạm thời chỉ in ra để kiểm tra capture. Sẽ thay bằng parsing pipeline.
-    print(f"{raw.timestamp:.6f} {raw.source} linktype={raw.linktype} len={len(raw.data)}")
+class PacketPrinter:
+    """Tạm thời: parse IPv4 và TCP rồi in một dòng mỗi gói.
+
+    Bước sau sẽ thay bằng pipeline chính thức và ghi JSON Lines.
+    """
+
+    def __init__(self) -> None:
+        self.packet_id = 0
+
+    def __call__(self, raw: RawPacket) -> None:
+        self.packet_id += 1
+        try:
+            line = self.describe(raw)
+        except ParseError as exc:
+            line = f"MALFORMED {exc}"
+        except Exception as exc:   # Lỗi bất ngờ trong parser cũng không được làm dừng chương trình
+            line = f"ERROR {type(exc).__name__}: {exc}"
+        print(f"#{self.packet_id} {line}")
+
+    @staticmethod
+    def describe(raw: RawPacket) -> str:
+        _, ethertype, l3 = parse_link(raw.data, raw.linktype)
+        if ethertype != ETHERTYPE_IPV4:
+            name = ETHERTYPE_NAMES.get(ethertype, f"0x{ethertype:04x}")
+            return f"{name} UNKNOWN"
+
+        ip, l4 = parse_ipv4(l3)
+        note = " (truncated)" if ip["truncated"] else ""
+        if ip["frag_offset"] > 0:
+            return f"{ip['src']} -> {ip['dst']} IPv4 fragment offset={ip['frag_offset']}{note}"
+        if ip["proto"] != IP_PROTO_TCP:
+            return f"{ip['src']} -> {ip['dst']} {ip['proto_name']} ttl={ip['ttl']}{note}"
+
+        tcp, _ = parse_tcp(l4)
+        return (f"{ip['src']}:{tcp['srcport']} -> {ip['dst']}:{tcp['dstport']} "
+                f"TCP [{tcp['kind']}] seq={tcp['seq']} ack={tcp['ack']} "
+                f"win={tcp['window_size_value']} len={tcp['len']}{note}")
 
 
 def main() -> None:
@@ -21,11 +60,12 @@ def main() -> None:
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
+    handler = PacketPrinter()
     try:
         if args.pcap:
-            capture_pcap(args.pcap, print_packet)
+            capture_pcap(args.pcap, handler)
         else:
-            capture_live(args.interface, print_packet, args.filter, args.count)
+            capture_live(args.interface, handler, args.filter, args.count)
     except KeyboardInterrupt:
         pass
     except FileNotFoundError:
