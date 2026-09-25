@@ -1,0 +1,20 @@
+test_handler_error_does_not_stop_capture (tests.test_capture.LiveCaptureTest.test_handler_error_does_not_stop_capture) ... ok
+test_linktype_detection (tests.test_capture.LiveCaptureTest.test_linktype_detection) ... ok
+test_passes_packets_to_handler (tests.test_capture.LiveCaptureTest.test_passes_packets_to_handler) ... ok
+test_sniff_arguments (tests.test_capture.LiveCaptureTest.test_sniff_arguments) ... ok
+test_invalid_interface_message (tests.test_capture.MainCliTest.test_invalid_interface_message) ... ok
+test_missing_pcap_message (tests.test_capture.MainCliTest.test_missing_pcap_message) ... ok
+test_requires_mode (tests.test_capture.MainCliTest.test_requires_mode) ... ok
+test_empty_file_does_not_crash (tests.test_capture.PcapCaptureTest.test_empty_file_does_not_crash) ... ok
+test_handler_error_does_not_stop_reading (tests.test_capture.PcapCaptureTest.test_handler_error_does_not_stop_reading) ... ok
+test_missing_file_raises (tests.test_capture.PcapCaptureTest.test_missing_file_raises) ... ok
+test_not_a_pcap_does_not_crash (tests.test_capture.PcapCaptureTest.test_not_a_pcap_does_not_crash) ... ok
+test_pcapng_supported (tests.test_capture.PcapCaptureTest.test_pcapng_supported) ... ok
+test_raw_ip_linktype (tests.test_capture.PcapCaptureTest.test_raw_ip_linktype) ... ok
+test_reads_all_packets_in_order (tests.test_capture.PcapCaptureTest.test_reads_all_packets_in_order) ... ok
+test_truncated_pcap_does_not_crash (tests.test_capture.PcapCaptureTest.test_truncated_pcap_does_not_crash) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 1.562s
+
+OK
