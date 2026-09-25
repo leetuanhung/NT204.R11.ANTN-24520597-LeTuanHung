@@ -1,0 +1,19 @@
+test_three_way_handshake (tests.test_transport.HandshakeTest.test_three_way_handshake) ... ok
+test_errors (tests.test_transport.TcpErrorTest.test_errors) ... ok
+test_all_fields_match_scapy (tests.test_transport.TcpFieldsTest.test_all_fields_match_scapy) ... ok
+test_data_packet_with_payload (tests.test_transport.TcpFieldsTest.test_data_packet_with_payload)
+Test case bắt buộc: parse TCP packet có payload. ... ok
+test_every_flag (tests.test_transport.TcpFieldsTest.test_every_flag) ... ok
+test_kind_from_dict (tests.test_transport.TcpFieldsTest.test_kind_from_dict) ... ok
+test_kind_labels (tests.test_transport.TcpFieldsTest.test_kind_labels) ... ok
+test_large_payload_hex_is_capped (tests.test_transport.TcpFieldsTest.test_large_payload_hex_is_capped) ... ok
+test_eol_stops_parsing (tests.test_transport.TcpOptionsTest.test_eol_stops_parsing) ... ok
+test_malformed_options_do_not_break_packet (tests.test_transport.TcpOptionsTest.test_malformed_options_do_not_break_packet) ... ok
+test_no_options (tests.test_transport.TcpOptionsTest.test_no_options) ... ok
+test_sack_blocks (tests.test_transport.TcpOptionsTest.test_sack_blocks) ... ok
+test_syn_options (tests.test_transport.TcpOptionsTest.test_syn_options) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.011s
+
+OK
