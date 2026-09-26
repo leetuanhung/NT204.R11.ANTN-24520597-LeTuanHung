@@ -3,6 +3,7 @@ import logging
 import sys
 
 from ids.capture import RawPacket, capture_live, capture_pcap
+from ids.detector import detect_app
 from ids.parsers.errors import ParseError
 from ids.parsers.network import ETHERTYPE_IPV4, ETHERTYPE_NAMES, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
@@ -42,18 +43,28 @@ class PacketPrinter:
         if ip["frag_offset"] > 0:
             return f"{ip['src']} -> {ip['dst']} IPv4 fragment offset={ip['frag_offset']}{note}"
         if ip["proto"] == IP_PROTO_UDP:
-            udp, _ = parse_udp(l4)
+            udp, payload = parse_udp(l4)
             if udp["truncated"]:
                 note = " (truncated)"
+            app = PacketPrinter.app_label("UDP", udp, payload)
             return (f"{ip['src']}:{udp['srcport']} -> {ip['dst']}:{udp['dstport']} "
-                    f"UDP len={udp['len']}{note}")
+                    f"UDP len={udp['len']}{app}{note}")
         if ip["proto"] != IP_PROTO_TCP:
             return f"{ip['src']} -> {ip['dst']} {ip['proto_name']} ttl={ip['ttl']}{note}"
 
-        tcp, _ = parse_tcp(l4)
+        tcp, payload = parse_tcp(l4)
+        app = PacketPrinter.app_label("TCP", tcp, payload)
         return (f"{ip['src']}:{tcp['srcport']} -> {ip['dst']}:{tcp['dstport']} "
                 f"TCP [{tcp['kind']}] seq={tcp['seq']} ack={tcp['ack']} "
-                f"win={tcp['window_size_value']} len={tcp['len']}{note}")
+                f"win={tcp['window_size_value']} len={tcp['len']}{app}{note}")
+
+    @staticmethod
+    def app_label(transport: str, l4: dict, payload: bytes) -> str:
+        """Chuỗi " app=HTTP(payload+port)"; rỗng nếu gói không có payload."""
+        protocol, detected_by = detect_app(transport, l4["srcport"], l4["dstport"], payload)
+        if protocol is None:
+            return ""
+        return f" app={protocol}({detected_by})" if detected_by else f" app={protocol}"
 
 
 def main() -> None:
