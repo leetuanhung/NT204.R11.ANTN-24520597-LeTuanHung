@@ -123,6 +123,9 @@ def main() -> None:
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
+    # Scapy tự phân tích gói khi đọc và in cảnh báo về gói lạ (ví dụ vòng lặp nén DNS).
+    # Chương trình chỉ lấy byte thô từ Scapy nên ẩn các cảnh báo đó; lỗi của Scapy vẫn hiện.
+    logging.getLogger("scapy").setLevel(logging.ERROR)
 
     handler = PacketPrinter()
     try:
