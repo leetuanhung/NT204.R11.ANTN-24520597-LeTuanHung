@@ -5,6 +5,7 @@ import sys
 from ids.capture import RawPacket, capture_live, capture_pcap
 from ids.detector import detect_app
 from ids.parsers.errors import ParseError
+from ids.parsers.dns import parse_dns
 from ids.parsers.http import parse_http
 from ids.parsers.network import ETHERTYPE_IPV4, ETHERTYPE_NAMES, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
@@ -66,9 +67,39 @@ class PacketPrinter:
         if protocol is None:
             return ""
         label = f" app={protocol}({detected_by})" if detected_by else f" app={protocol}"
-        if protocol == "HTTP":
-            label += PacketPrinter.http_summary(parse_http(payload))
+        try:
+            if protocol == "HTTP":
+                label += PacketPrinter.http_summary(parse_http(payload))
+            elif protocol == "DNS":
+                label += PacketPrinter.dns_summary(parse_dns(payload, transport))
+        except ParseError as exc:
+            # Lỗi ở tầng ứng dụng: vẫn giữ thông tin IP, port của gói
+            label += f" MALFORMED {exc}"
         return label
+
+    @staticmethod
+    def dns_summary(dns: dict) -> str:
+        """Tóm tắt: " query A example.com" hoặc " response NOERROR A example.com -> 1.2.3.4"."""
+        q = dns["qry"][0] if dns["qry"] else None
+        question = f" {q['type_name']} {q['name']}" if q else ""
+        if not dns["flags"]["response"]:
+            text = f" query{question}"
+        else:
+            answers = []
+            for rr in dns["resp"]:
+                if rr["section"] != "answer":
+                    continue
+                value = (rr.get("a") or rr.get("aaaa") or rr.get("cname") or rr.get("ns")
+                         or rr.get("ptr") or rr.get("mx", {}).get("mail_exchange")
+                         or " ".join(rr.get("txt", [])) or rr.get("srv", {}).get("target")
+                         or rr.get("type_name"))
+                answers.append(value)
+            text = f" response {dns['flags']['rcode_name']}{question}"
+            if answers:
+                text += " -> " + ", ".join(answers[:3]) + (" ..." if len(answers) > 3 else "")
+        if dns["malformed"]:
+            text += f" (malformed: {dns['error']})"
+        return text
 
     @staticmethod
     def http_summary(http: dict) -> str:
