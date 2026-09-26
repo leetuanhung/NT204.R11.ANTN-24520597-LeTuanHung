@@ -12,10 +12,11 @@ import random
 import tempfile
 import unittest
 
-from scapy.all import DNS, DNSQR, IP, TCP, UDP, Dot1Q, Ether, IPOption_Router_Alert, Raw, wrpcap
+from scapy.all import DNS, DNSQR, DNSRR, DNSRRMX, DNSRRSOA, IP, TCP, UDP, Dot1Q, Ether, IPOption_Router_Alert, Raw, wrpcap
 
 from ids.capture import capture_pcap
 from ids.detector import detect_app
+from ids.parsers.dns import parse_dns
 from ids.parsers.errors import ParseError
 from ids.parsers.http import parse_http
 from ids.parsers.network import ETHERTYPE_IPV4, parse_ipv4, parse_link
@@ -73,6 +74,8 @@ class ParserFuzzTest(unittest.TestCase):
                         app = detect_app(transport, hdr["srcport"], hdr["dstport"], payload)
                         if app.protocol == "HTTP":
                             parse_http(payload)
+                        elif app.protocol == "DNS":
+                            parse_dns(payload, transport)
             except ParseError:
                 pass                               # Lỗi có kiểm soát: chấp nhận
             except Exception as exc:               # Mọi lỗi khác là bug
@@ -115,6 +118,32 @@ class HttpFuzzTest(unittest.TestCase):
                 pass
             except Exception as exc:
                 self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | payload={payload!r}")
+
+
+class DnsFuzzTest(unittest.TestCase):
+    def test_dns_parser_only_raises_parse_error(self):
+        """Thông điệp DNS bị làm hỏng (kể cả con trỏ nén giả): chỉ được ném ParseError."""
+        rng = random.Random(5)
+        response = bytes(DNS(
+            id=1, qr=1, rd=1, ra=1, qd=DNSQR(qname="www.example.com"),
+            an=[DNSRR(rrname="www.example.com", type="CNAME", rdata="example.com"),
+                DNSRR(rrname="example.com", rdata="93.184.216.34"),
+                DNSRR(rrname="example.com", type="TXT", rdata=["a", "bc"])],
+            ns=[DNSRRSOA(rrname="example.com", mname="ns.example.com", rname="a.example.com")],
+            ar=[DNSRRMX(rrname="example.com", exchange="mx.example.com")]).compress())
+        seeds = [response, bytes(SEEDS[4][DNS])]
+        for i in range(20000):
+            msg = mutate(rng, rng.choice(seeds))
+            transport = rng.choice(["UDP", "TCP"])
+            if transport == "TCP":
+                msg = len(msg).to_bytes(2, "big") + msg
+            try:
+                result = parse_dns(msg, transport)
+                self.assertIsInstance(result["malformed"], bool)
+            except ParseError:
+                pass
+            except Exception as exc:
+                self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | msg={msg.hex()}")
 
 
 class PcapFuzzTest(unittest.TestCase):
