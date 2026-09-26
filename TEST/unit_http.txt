@@ -7,6 +7,7 @@ test_extra_bytes_after_body_ignored (tests.test_http.BodyTest.test_extra_bytes_a
 test_headers_cut_off (tests.test_http.BodyTest.test_headers_cut_off) ... ok
 test_invalid_content_length (tests.test_http.BodyTest.test_invalid_content_length) ... ok
 test_long_body_text_capped (tests.test_http.BodyTest.test_long_body_text_capped) ... ok
+test_non_ascii_digits_in_content_length (tests.test_http.BodyTest.test_non_ascii_digits_in_content_length) ... ok
 test_partial_body (tests.test_http.BodyTest.test_partial_body) ... ok
 test_repeated_same_content_length_is_ok (tests.test_http.BodyTest.test_repeated_same_content_length_is_ok) ... ok
 test_response_without_length_is_unknown (tests.test_http.BodyTest.test_response_without_length_is_unknown) ... ok
@@ -30,6 +31,6 @@ test_empty_phrase_allowed (tests.test_http.StatusLineTest.test_empty_phrase_allo
 test_phrase_with_spaces (tests.test_http.StatusLineTest.test_phrase_with_spaces) ... ok
 
 ----------------------------------------------------------------------
-Ran 30 tests in 0.002s
+Ran 31 tests in 0.001s
 
 OK

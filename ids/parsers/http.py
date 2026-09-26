@@ -18,6 +18,9 @@ _REQUEST_LINE = re.compile(
     rb"(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH|CONNECT|TRACE) (\S+) (HTTP/1\.[01])\r?$")
 _STATUS_LINE = re.compile(rb"(HTTP/1\.[01]) ([1-5]\d\d)(?: (.*))?\r?$")
 
+# Content-Length chỉ gồm chữ số ASCII. Không dùng str.isdigit() vì nó coi cả "³", "١" là chữ số.
+_DIGITS = re.compile(r"[0-9]+")
+
 # Tên header hợp lệ là một "token" (RFC 9110 mục 5.1)
 _HEADER_NAME = re.compile(rb"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
 
@@ -67,7 +70,7 @@ def _parse_content_length(values: list[str]) -> tuple[int | None, bool]:
     if len(distinct) != 1:
         return None, True
     value = distinct.pop()
-    if not value.isdigit():
+    if not _DIGITS.fullmatch(value):
         return None, True
     return int(value), False
 

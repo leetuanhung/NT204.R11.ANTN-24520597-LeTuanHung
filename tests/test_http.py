@@ -176,6 +176,14 @@ class BodyTest(unittest.TestCase):
                 self.assertIsNone(h["content_length"])
                 self.assertTrue(h["content_length_invalid"])
 
+    def test_non_ascii_digits_in_content_length(self):
+        # Byte 0xB3 giải mã latin-1 thành "³": str.isdigit() coi là chữ số nhưng int() thì lỗi
+        for value in [b"\xb3", b"1\xb9", b"\xb23"]:
+            with self.subTest(value=value):
+                h = parse_http(b"POST / HTTP/1.1\r\nContent-Length: " + value + b"\r\n\r\nxyz")
+                self.assertIsNone(h["content_length"])
+                self.assertTrue(h["content_length_invalid"])
+
     def test_conflicting_content_length(self):
         h = parse_http(b"POST / HTTP/1.1\r\nContent-Length: 3\r\nContent-Length: 10\r\n\r\nabc")
         self.assertTrue(h["content_length_invalid"])
