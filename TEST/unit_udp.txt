@@ -1,0 +1,14 @@
+test_errors (tests.test_udp.UdpErrorTest.test_errors) ... ok
+test_all_fields_match_scapy (tests.test_udp.UdpFieldsTest.test_all_fields_match_scapy) ... ok
+test_dns_query_payload (tests.test_udp.UdpFieldsTest.test_dns_query_payload)
+Test case bắt buộc "UDP": parse gói UDP có payload (một truy vấn DNS). ... ok
+test_empty_payload (tests.test_udp.UdpFieldsTest.test_empty_payload) ... ok
+test_large_payload_hex_is_capped (tests.test_udp.UdpFieldsTest.test_large_payload_hex_is_capped) ... ok
+test_length_bigger_than_data_is_truncated (tests.test_udp.UdpFieldsTest.test_length_bigger_than_data_is_truncated) ... ok
+test_length_smaller_than_data_drops_extra_bytes (tests.test_udp.UdpFieldsTest.test_length_smaller_than_data_drops_extra_bytes) ... ok
+test_zero_checksum (tests.test_udp.UdpFieldsTest.test_zero_checksum) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.003s
+
+OK
