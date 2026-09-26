@@ -34,6 +34,7 @@ ids/parsers/transport.py  # Parse TCP, UDP (tên trường theo Wireshark tcp.*,
 ids/detector.py      # Nhận diện HTTP, DNS, SMTP theo payload và port
 ids/parsers/http.py  # Parse HTTP/1.x (tên trường theo Wireshark http.*)
 ids/parsers/dns.py   # Parse DNS qua UDP và TCP (tên trường theo Wireshark dns.*)
+ids/parsers/smtp.py  # Parse lệnh, phản hồi và nội dung thư SMTP (tên trường theo Wireshark smtp.*)
 tests/               # Unit test (unittest)
 TEST/                # Kết quả các test case
 ```
@@ -42,4 +43,4 @@ TEST/                # Kết quả các test case
 
 | Công cụ | Mục đích | Phần mã nguồn |
 |---|---|---|
-| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `ids/parsers/http.py`, `ids/parsers/dns.py`, `main.py`, các file trong `tests/` |
+| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `ids/parsers/http.py`, `ids/parsers/dns.py`, `ids/parsers/smtp.py`, `main.py`, các file trong `tests/` |

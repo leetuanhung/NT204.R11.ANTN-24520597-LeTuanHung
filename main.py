@@ -7,6 +7,7 @@ from ids.detector import detect_app
 from ids.parsers.errors import ParseError
 from ids.parsers.dns import parse_dns
 from ids.parsers.http import parse_http
+from ids.parsers.smtp import parse_smtp
 from ids.parsers.network import ETHERTYPE_IPV4, ETHERTYPE_NAMES, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
 
@@ -72,10 +73,33 @@ class PacketPrinter:
                 label += PacketPrinter.http_summary(parse_http(payload))
             elif protocol == "DNS":
                 label += PacketPrinter.dns_summary(parse_dns(payload, transport))
+            elif protocol == "SMTP":
+                label += PacketPrinter.smtp_summary(parse_smtp(payload))
         except ParseError as exc:
             # Lỗi ở tầng ứng dụng: vẫn giữ thông tin IP, port của gói
             label += f" MALFORMED {exc}"
         return label
+
+    @staticmethod
+    def smtp_summary(smtp: dict) -> str:
+        """Tóm tắt: " EHLO client", " 250 OK", " auth data (12 bytes)", " message Subject: ..."."""
+        if smtp["type"] == "request":
+            text = f" {smtp['command_line']}"
+            if len(smtp["commands"]) > 1:
+                text += f" (+{len(smtp['commands']) - 1} lệnh)"
+            return text
+        if smtp["type"] == "response":
+            res = smtp["response"]
+            text = f" {res['code']} {res['parameter']}".rstrip()
+            if res["multiline"]:
+                text += f" (+{len(res['lines']) - 1} dòng)"
+            if len(smtp["responses"]) > 1:
+                text += f" (+{len(smtp['responses']) - 1} phản hồi)"
+            return text
+        if smtp["type"] == "auth_data":
+            return f" auth data ({smtp['auth_data']['len']} bytes, đã ẩn)"
+        subject = smtp["data"].get("headers", {}).get("subject")
+        return f" message Subject: {subject}" if subject else f" message ({smtp['data']['lines']} dòng)"
 
     @staticmethod
     def dns_summary(dns: dict) -> str:
