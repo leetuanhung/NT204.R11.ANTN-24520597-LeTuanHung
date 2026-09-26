@@ -239,6 +239,22 @@ class MalformedTest(unittest.TestCase):
         msg = header(flags=0x8000, an=1) + name(b"a") + struct.pack("!HHIH", 16, 1, 60, 3) + b"\x09ab"
         self.assertIn("TXT", parse_dns(msg)["resp"][0]["rdata_malformed"])
 
+    def test_decompression_budget_stops_slow_packet(self):
+        # Tấn công làm chậm: hàng nghìn bản ghi cùng trỏ về một tên 127 nhãn
+        long_name = b"\x01a" * 127 + b"\x00"
+        rr = b"\xc0\x0c" + struct.pack("!HHIH", 1, 1, 60, 4) + b"\x01\x02\x03\x04"
+        msg = header(flags=0x8000, qd=1, an=4000) + long_name + b"\x00\x01\x00\x01" + rr * 4000
+        d = self.assert_malformed(msg, "bước giải nén")
+        self.assertLess(len(d["resp"]), 4000)
+        self.assertEqual(d["qry"][0]["name"].count("."), 126)   # Phần đã đọc vẫn được giữ
+
+    def test_budget_allows_large_legit_response(self):
+        name_www = b"\x03www\x07example\x03com\x00"
+        rr = b"\xc0\x0c" + struct.pack("!HHIH", 1, 1, 60, 4) + b"\x01\x02\x03\x04"
+        d = parse_dns(header(flags=0x8000, qd=1, an=2000) + name_www + b"\x00\x01\x00\x01" + rr * 2000)
+        self.assertFalse(d["malformed"])
+        self.assertEqual(len(d["resp"]), 2000)
+
     def test_trailing_bytes(self):
         d = parse_dns(QUERY + b"junk")
         self.assertFalse(d["malformed"])

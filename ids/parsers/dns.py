@@ -19,6 +19,10 @@ DNS_HEADER = 12
 MAX_NAME_LEN = 255          # RFC 1035: tên miền tối đa 255 byte
 MAX_POINTER_JUMPS = 64      # Chặn vòng lặp con trỏ nén
 MAX_RDATA_HEX = 256         # Dữ liệu của kiểu bản ghi chưa hỗ trợ: ghi tối đa 256 byte dạng hex
+# Tổng số bước (nhãn + con trỏ) được phép đọc trong MỘT thông điệp. Gói 64 KB có thể chứa hàng
+# nghìn bản ghi cùng trỏ về một tên dài 127 nhãn, bắt parser làm hàng trăm nghìn bước.
+# Thông điệp bình thường chỉ cần vài trăm bước, nên giới hạn này không ảnh hưởng gói hợp lệ.
+MAX_NAME_STEPS = 20000
 
 OPCODE_NAMES = {0: "QUERY", 1: "IQUERY", 2: "STATUS", 4: "NOTIFY", 5: "UPDATE", 6: "DSO"}
 RCODE_NAMES = {0: "NOERROR", 1: "FORMERR", 2: "SERVFAIL", 3: "NXDOMAIN", 4: "NOTIMP",
@@ -35,6 +39,18 @@ SECTIONS = ("answer", "authority", "additional")
 
 class _Malformed(Exception):
     """Lỗi bên trong phần câu hỏi/bản ghi. Chỉ dùng nội bộ để dừng vòng đọc."""
+
+
+class _Budget:
+    """Đếm số bước đọc tên còn lại của một thông điệp, chống tấn công làm chậm parser."""
+
+    def __init__(self, limit: int = MAX_NAME_STEPS) -> None:
+        self.left = limit
+
+    def spend(self) -> None:
+        self.left -= 1
+        if self.left < 0:
+            raise _Malformed(f"Vượt quá {MAX_NAME_STEPS} bước giải nén tên trong một thông điệp")
 
 
 def _need(msg: bytes, off: int, n: int, what: str) -> None:
@@ -61,7 +77,7 @@ def _label_text(label: bytes) -> str:
     return "".join(out)
 
 
-def read_name(msg: bytes, off: int) -> tuple[str, int]:
+def read_name(msg: bytes, off: int, budget: _Budget | None = None) -> tuple[str, int]:
     """Đọc tên miền bắt đầu tại off. Trả về (tên, vị trí ngay sau tên trong bản gốc).
 
     Tên gồm các nhãn [độ dài 1 byte][nội dung], kết thúc bằng byte 0.
@@ -74,6 +90,8 @@ def read_name(msg: bytes, off: int) -> tuple[str, int]:
     jumps = 0
     visited = set()
     while True:
+        if budget is not None:
+            budget.spend()
         _need(msg, off, 1, "Tên miền")
         length = msg[off]
         kind = length & 0xC0
@@ -117,7 +135,8 @@ def _read_character_strings(rdata: bytes) -> list[str]:
     return out
 
 
-def _parse_rdata(msg: bytes, rtype: int, start: int, rdlen: int, rr: dict) -> None:
+def _parse_rdata(msg: bytes, rtype: int, start: int, rdlen: int, rr: dict,
+                 budget: _Budget) -> None:
     """Đọc phần dữ liệu (RDATA) theo kiểu bản ghi, ghi thẳng vào rr.
 
     Tên miền trong RDATA có thể dùng con trỏ nén trỏ ra chỗ khác trong gói,
@@ -127,7 +146,7 @@ def _parse_rdata(msg: bytes, rtype: int, start: int, rdlen: int, rr: dict) -> No
     rdata = msg[start:end]
 
     def name_at(off: int) -> tuple[str, int]:
-        name, after = read_name(msg, off)
+        name, after = read_name(msg, off, budget)
         if after > end:
             raise _Malformed("Tên miền trong RDATA vượt quá độ dài bản ghi")
         return name, after
@@ -171,8 +190,8 @@ def _parse_rdata(msg: bytes, rtype: int, start: int, rdlen: int, rr: dict) -> No
         rr["data"] = rdata[:MAX_RDATA_HEX].hex()
 
 
-def _parse_question(msg: bytes, off: int) -> tuple[dict, int]:
-    name, off = read_name(msg, off)
+def _parse_question(msg: bytes, off: int, budget: _Budget) -> tuple[dict, int]:
+    name, off = read_name(msg, off, budget)
     _need(msg, off, 4, "Câu hỏi")
     qtype, qclass = struct.unpack("!HH", msg[off:off + 4])
     q = {
@@ -187,8 +206,8 @@ def _parse_question(msg: bytes, off: int) -> tuple[dict, int]:
     return q, off + 4
 
 
-def _parse_record(msg: bytes, off: int, section: str) -> tuple[dict, int]:
-    name, off = read_name(msg, off)
+def _parse_record(msg: bytes, off: int, section: str, budget: _Budget) -> tuple[dict, int]:
+    name, off = read_name(msg, off, budget)
     _need(msg, off, 10, "Bản ghi")
     rtype, rclass, ttl, rdlen = struct.unpack("!HHIH", msg[off:off + 10])
     off += 10
@@ -210,8 +229,10 @@ def _parse_record(msg: bytes, off: int, section: str) -> tuple[dict, int]:
     rr["ttl"] = ttl
     rr["len"] = rdlen
     try:
-        _parse_rdata(msg, rtype, off, rdlen, rr)
+        _parse_rdata(msg, rtype, off, rdlen, rr, budget)
     except _Malformed as exc:
+        if budget.left < 0:
+            raise                   # Hết ngân sách thì dừng cả thông điệp, không đọc tiếp
         # rdlen cho biết bản ghi kết thúc ở đâu, nên RDATA hỏng không làm hỏng các bản ghi sau
         rr["rdata_malformed"] = str(exc)
         rr["data"] = msg[off:off + rdlen][:MAX_RDATA_HEX].hex()
@@ -260,13 +281,14 @@ def parse_dns(payload: bytes, transport: str = "UDP") -> dict:
     })
 
     off = DNS_HEADER
+    budget = _Budget()
     try:
         for _ in range(qd):
-            q, off = _parse_question(msg, off)
+            q, off = _parse_question(msg, off, budget)
             dns["qry"].append(q)
         for section, count in zip(SECTIONS, (an, ns, ar)):
             for _ in range(count):
-                rr, off = _parse_record(msg, off, section)
+                rr, off = _parse_record(msg, off, section, budget)
                 dns["resp"].append(rr)
     except _Malformed as exc:
         dns["malformed"] = True

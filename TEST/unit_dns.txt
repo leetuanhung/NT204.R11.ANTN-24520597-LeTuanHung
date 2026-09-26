@@ -1,6 +1,8 @@
 test_bad_label_type (tests.test_dns.MalformedTest.test_bad_label_type) ... ok
 test_bad_rdata_does_not_stop_next_record (tests.test_dns.MalformedTest.test_bad_rdata_does_not_stop_next_record) ... ok
+test_budget_allows_large_legit_response (tests.test_dns.MalformedTest.test_budget_allows_large_legit_response) ... ok
 test_counts_bigger_than_data (tests.test_dns.MalformedTest.test_counts_bigger_than_data) ... ok
+test_decompression_budget_stops_slow_packet (tests.test_dns.MalformedTest.test_decompression_budget_stops_slow_packet) ... ok
 test_header_errors (tests.test_dns.MalformedTest.test_header_errors) ... ok
 test_keeps_parsed_parts (tests.test_dns.MalformedTest.test_keeps_parsed_parts) ... ok
 test_name_too_long (tests.test_dns.MalformedTest.test_name_too_long) ... ok
@@ -31,6 +33,6 @@ test_dns_over_tcp (tests.test_dns.TcpTest.test_dns_over_tcp) ... ok
 test_dns_over_tcp_split_segment (tests.test_dns.TcpTest.test_dns_over_tcp_split_segment) ... ok
 
 ----------------------------------------------------------------------
-Ran 31 tests in 0.007s
+Ran 33 tests in 0.026s
 
 OK
