@@ -1,0 +1,29 @@
+test_dns_over_tcp (tests.test_detector.DnsDetectionTest.test_dns_over_tcp) ... ok
+test_looks_like_dns_rejects (tests.test_detector.DnsDetectionTest.test_looks_like_dns_rejects) ... ok
+test_malformed_dns_on_port_53_still_labelled_by_port (tests.test_detector.DnsDetectionTest.test_malformed_dns_on_port_53_still_labelled_by_port) ... ok
+test_mdns (tests.test_detector.DnsDetectionTest.test_mdns) ... ok
+test_non_standard_port (tests.test_detector.DnsDetectionTest.test_non_standard_port) ... ok
+test_standard_port (tests.test_detector.DnsDetectionTest.test_standard_port) ... ok
+test_empty_payload (tests.test_detector.GeneralDetectionTest.test_empty_payload) ... ok
+test_http_port_over_udp_is_not_http (tests.test_detector.GeneralDetectionTest.test_http_port_over_udp_is_not_http) ... ok
+test_port_only (tests.test_detector.GeneralDetectionTest.test_port_only) ... ok
+test_random_payload_no_false_positive (tests.test_detector.GeneralDetectionTest.test_random_payload_no_false_positive) ... ok
+test_tls_is_unknown (tests.test_detector.GeneralDetectionTest.test_tls_is_unknown) ... ok
+test_all_methods (tests.test_detector.HttpDetectionTest.test_all_methods) ... ok
+test_http_over_udp_is_not_http (tests.test_detector.HttpDetectionTest.test_http_over_udp_is_not_http) ... ok
+test_non_standard_port (tests.test_detector.HttpDetectionTest.test_non_standard_port)
+Điểm thưởng mục 5: nhận đúng HTTP trên port không chuẩn. ... ok
+test_not_http (tests.test_detector.HttpDetectionTest.test_not_http) ... ok
+test_payload_wins_over_port (tests.test_detector.HttpDetectionTest.test_payload_wins_over_port) ... ok
+test_request_line_only (tests.test_detector.HttpDetectionTest.test_request_line_only) ... ok
+test_standard_port (tests.test_detector.HttpDetectionTest.test_standard_port) ... ok
+test_banner_any_port (tests.test_detector.SmtpDetectionTest.test_banner_any_port) ... ok
+test_email_body_on_port_25 (tests.test_detector.SmtpDetectionTest.test_email_body_on_port_25) ... ok
+test_ftp_and_pop3_not_smtp (tests.test_detector.SmtpDetectionTest.test_ftp_and_pop3_not_smtp) ... ok
+test_strong_commands_any_port (tests.test_detector.SmtpDetectionTest.test_strong_commands_any_port) ... ok
+test_weak_signals_need_smtp_port (tests.test_detector.SmtpDetectionTest.test_weak_signals_need_smtp_port) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.265s
+
+OK
