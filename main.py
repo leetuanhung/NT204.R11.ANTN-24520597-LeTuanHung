@@ -5,9 +5,10 @@ import sys
 from ids.capture import RawPacket, capture_live, capture_pcap
 from ids.parsers.errors import ParseError
 from ids.parsers.network import ETHERTYPE_IPV4, ETHERTYPE_NAMES, parse_ipv4, parse_link
-from ids.parsers.transport import parse_tcp
+from ids.parsers.transport import parse_tcp, parse_udp
 
 IP_PROTO_TCP = 6
+IP_PROTO_UDP = 17
 
 
 class PacketPrinter:
@@ -40,6 +41,12 @@ class PacketPrinter:
         note = " (truncated)" if ip["truncated"] else ""
         if ip["frag_offset"] > 0:
             return f"{ip['src']} -> {ip['dst']} IPv4 fragment offset={ip['frag_offset']}{note}"
+        if ip["proto"] == IP_PROTO_UDP:
+            udp, _ = parse_udp(l4)
+            if udp["truncated"]:
+                note = " (truncated)"
+            return (f"{ip['src']}:{udp['srcport']} -> {ip['dst']}:{udp['dstport']} "
+                    f"UDP len={udp['len']}{note}")
         if ip["proto"] != IP_PROTO_TCP:
             return f"{ip['src']} -> {ip['dst']} {ip['proto_name']} ttl={ip['ttl']}{note}"
 

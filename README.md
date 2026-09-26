@@ -30,7 +30,7 @@ main.py              # CLI, chọn chế độ live hoặc pcap
 ids/capture.py       # Nguồn packet: live interface hoặc file PCAP -> (timestamp, raw bytes)
 ids/linktypes.py     # Mã linktype libpcap
 ids/parsers/network.py    # Bỏ header lớp 2, parse IPv4 (tên trường theo Wireshark ip.*)
-ids/parsers/transport.py  # Parse TCP (tên trường theo Wireshark tcp.*)
+ids/parsers/transport.py  # Parse TCP, UDP (tên trường theo Wireshark tcp.*, udp.*)
 tests/               # Unit test (unittest)
 TEST/                # Kết quả các test case
 ```
