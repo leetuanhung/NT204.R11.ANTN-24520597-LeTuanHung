@@ -32,6 +32,7 @@ ids/linktypes.py     # Mã linktype libpcap
 ids/parsers/network.py    # Bỏ header lớp 2, parse IPv4 (tên trường theo Wireshark ip.*)
 ids/parsers/transport.py  # Parse TCP, UDP (tên trường theo Wireshark tcp.*, udp.*)
 ids/detector.py      # Nhận diện HTTP, DNS, SMTP theo payload và port
+ids/parsers/http.py  # Parse HTTP/1.x (tên trường theo Wireshark http.*)
 tests/               # Unit test (unittest)
 TEST/                # Kết quả các test case
 ```
@@ -40,4 +41,4 @@ TEST/                # Kết quả các test case
 
 | Công cụ | Mục đích | Phần mã nguồn |
 |---|---|---|
-| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `main.py`, các file trong `tests/` |
+| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `ids/parsers/http.py`, `main.py`, các file trong `tests/` |

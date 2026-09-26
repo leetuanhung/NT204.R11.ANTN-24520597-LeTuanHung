@@ -5,6 +5,7 @@ import sys
 from ids.capture import RawPacket, capture_live, capture_pcap
 from ids.detector import detect_app
 from ids.parsers.errors import ParseError
+from ids.parsers.http import parse_http
 from ids.parsers.network import ETHERTYPE_IPV4, ETHERTYPE_NAMES, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
 
@@ -64,7 +65,21 @@ class PacketPrinter:
         protocol, detected_by = detect_app(transport, l4["srcport"], l4["dstport"], payload)
         if protocol is None:
             return ""
-        return f" app={protocol}({detected_by})" if detected_by else f" app={protocol}"
+        label = f" app={protocol}({detected_by})" if detected_by else f" app={protocol}"
+        if protocol == "HTTP":
+            label += PacketPrinter.http_summary(parse_http(payload))
+        return label
+
+    @staticmethod
+    def http_summary(http: dict) -> str:
+        """Tóm tắt một dòng: " GET http://host/path" hoặc " 200 OK"."""
+        if http["type"] == "request":
+            req = http["request"]
+            return f" {req['method']} {req.get('full_uri', req['uri'])}"
+        if http["type"] == "response":
+            res = http["response"]
+            return f" {res['code']} {res['phrase']}".rstrip()
+        return " (continuation)"
 
 
 def main() -> None:
