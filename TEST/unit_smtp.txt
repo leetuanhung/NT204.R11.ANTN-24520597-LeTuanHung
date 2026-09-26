@@ -1,0 +1,36 @@
+test_auth_bad_base64 (tests.test_smtp.AuthTest.test_auth_bad_base64) ... ok
+test_auth_login_password_line_is_masked (tests.test_smtp.AuthTest.test_auth_login_password_line_is_masked) ... ok
+test_auth_login_with_initial_username (tests.test_smtp.AuthTest.test_auth_login_with_initial_username) ... ok
+test_auth_login_without_data (tests.test_smtp.AuthTest.test_auth_login_without_data) ... ok
+test_auth_plain (tests.test_smtp.AuthTest.test_auth_plain) ... ok
+test_auth_plain_wrong_structure (tests.test_smtp.AuthTest.test_auth_plain_wrong_structure) ... ok
+test_address_without_brackets (tests.test_smtp.CommandTest.test_address_without_brackets) ... ok
+test_bad_mail_syntax_counted (tests.test_smtp.CommandTest.test_bad_mail_syntax_counted) ... ok
+test_command_split_across_packets (tests.test_smtp.CommandTest.test_command_split_across_packets) ... ok
+test_data_content_in_same_packet (tests.test_smtp.CommandTest.test_data_content_in_same_packet) ... ok
+test_lowercase_command_normalized (tests.test_smtp.CommandTest.test_lowercase_command_normalized) ... ok
+test_mail_from_with_parameters (tests.test_smtp.CommandTest.test_mail_from_with_parameters) ... ok
+test_many_commands_capped (tests.test_smtp.CommandTest.test_many_commands_capped) ... ok
+test_null_sender (tests.test_smtp.CommandTest.test_null_sender) ... ok
+test_pipelining_multiple_commands (tests.test_smtp.CommandTest.test_pipelining_multiple_commands) ... ok
+test_simple_commands (tests.test_smtp.CommandTest.test_simple_commands) ... ok
+test_unknown_lines_after_command (tests.test_smtp.CommandTest.test_unknown_lines_after_command) ... ok
+test_body_only_packet (tests.test_smtp.DataTest.test_body_only_packet) ... ok
+test_lf_only (tests.test_smtp.DataTest.test_lf_only) ... ok
+test_long_message_capped (tests.test_smtp.DataTest.test_long_message_capped) ... ok
+test_message_content (tests.test_smtp.DataTest.test_message_content) ... ok
+test_non_utf8_bytes (tests.test_smtp.DataTest.test_non_utf8_bytes) ... ok
+test_empty_payload (tests.test_smtp.ErrorTest.test_empty_payload) ... ok
+test_smtp_commands_helo_mail_rcpt (tests.test_smtp.RequiredCasesTest.test_smtp_commands_helo_mail_rcpt) ... ok
+test_smtp_response_status_code (tests.test_smtp.RequiredCasesTest.test_smtp_response_status_code) ... ok
+test_auth_challenge (tests.test_smtp.ResponseTest.test_auth_challenge) ... ok
+test_code_without_text (tests.test_smtp.ResponseTest.test_code_without_text) ... ok
+test_enhanced_status_code (tests.test_smtp.ResponseTest.test_enhanced_status_code) ... ok
+test_inconsistent_codes_counted (tests.test_smtp.ResponseTest.test_inconsistent_codes_counted) ... ok
+test_multiline_ehlo_response (tests.test_smtp.ResponseTest.test_multiline_ehlo_response) ... ok
+test_multiline_split_across_packets (tests.test_smtp.ResponseTest.test_multiline_split_across_packets) ... ok
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.002s
+
+OK
