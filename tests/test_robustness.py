@@ -19,6 +19,7 @@ from ids.detector import detect_app
 from ids.parsers.dns import parse_dns
 from ids.parsers.errors import ParseError
 from ids.parsers.http import parse_http
+from ids.parsers.smtp import parse_smtp
 from ids.parsers.network import ETHERTYPE_IPV4, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
 from main import PacketPrinter
@@ -33,6 +34,7 @@ SEEDS = [
     ETH / IP() / UDP(sport=5000, dport=53) / DNS(rd=1, qd=DNSQR(qname="example.com")),
     ETH / IP() / TCP(sport=5000, dport=25, flags="PA") / b"EHLO client\r\n",
     ETH / IP() / TCP(sport=80, dport=5000, flags="PA") / b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi",
+    ETH / IP() / TCP(sport=25, dport=5000, flags="PA") / b"250-mx\r\n250 PIPELINING\r\n",
 ]
 
 
@@ -76,6 +78,8 @@ class ParserFuzzTest(unittest.TestCase):
                             parse_http(payload)
                         elif app.protocol == "DNS":
                             parse_dns(payload, transport)
+                        elif app.protocol == "SMTP":
+                            parse_smtp(payload)
             except ParseError:
                 pass                               # Lỗi có kiểm soát: chấp nhận
             except Exception as exc:               # Mọi lỗi khác là bug
@@ -144,6 +148,28 @@ class DnsFuzzTest(unittest.TestCase):
                 pass
             except Exception as exc:
                 self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | msg={msg.hex()}")
+
+
+class SmtpFuzzTest(unittest.TestCase):
+    def test_smtp_parser_only_raises_parse_error(self):
+        """Payload SMTP bị làm hỏng: chỉ được ném ParseError, và không bao giờ lộ mật khẩu."""
+        rng = random.Random(6)
+        seeds = [
+            b"EHLO client\r\nMAIL FROM:<a@b.c> SIZE=10\r\nRCPT TO:<d@e.f>\r\nDATA\r\n",
+            b"250-mx\r\n250-PIPELINING\r\n250 2.1.0 Ok\r\n354 go\r\n",
+            b"AUTH PLAIN AGFsaWNlAHBhc3N3b3Jk\r\n",
+            b"From: a@b.c\r\nSubject: hi\r\n\r\nbody\r\n.\r\n",
+            b"cGFzc3dvcmQ=\r\n",
+        ]
+        for i in range(30000):
+            payload = mutate(rng, rng.choice(seeds))
+            try:
+                result = parse_smtp(payload)
+                self.assertIn(result["type"], ("request", "response", "auth_data", "data"))
+            except ParseError:
+                pass
+            except Exception as exc:
+                self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | payload={payload!r}")
 
 
 class PcapFuzzTest(unittest.TestCase):

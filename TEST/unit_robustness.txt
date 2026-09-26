@@ -6,8 +6,10 @@ test_http_parser_only_raises_parse_error (tests.test_robustness.HttpFuzzTest.tes
 Payload HTTP bị làm hỏng: parser chỉ được phép ném ParseError. ... ok
 test_mutated_packets_only_raise_parse_error (tests.test_robustness.ParserFuzzTest.test_mutated_packets_only_raise_parse_error) ... ok
 test_corrupted_pcap_files_do_not_crash (tests.test_robustness.PcapFuzzTest.test_corrupted_pcap_files_do_not_crash) ... ok
+test_smtp_parser_only_raises_parse_error (tests.test_robustness.SmtpFuzzTest.test_smtp_parser_only_raises_parse_error)
+Payload SMTP bị làm hỏng: chỉ được ném ParseError, và không bao giờ lộ mật khẩu. ... ok
 
 ----------------------------------------------------------------------
-Ran 5 tests in 2.379s
+Ran 6 tests in 3.106s
 
 OK
