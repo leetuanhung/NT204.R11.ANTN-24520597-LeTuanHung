@@ -21,9 +21,10 @@ DNS_RESP = bytes(DNS(id=0x1234, qr=1, rd=1, ra=1, qd=DNSQR(qname="example.com"),
                      an=DNSRR(rrname="example.com", type="A", rdata="93.184.216.34")))
 # mDNS: bit cao của class là cờ QU (unicast response), ví dụ class 0x8001
 MDNS_QUERY = bytes(DNS(qd=DNSQR(qname="_http._tcp.local", qtype="PTR", unicastresponse=1)))
-# mDNS trả lời không kèm câu hỏi (qdcount = 0), có bit cache-flush trong class
+# mDNS trả lời không kèm câu hỏi (qdcount = 0), có bit cache-flush trong class.
+# Scapy 2.7 tách bit này thành trường cacheflush; ghi rclass=0x8001 sẽ bị cắt mất bit.
 MDNS_ANSWER = bytes(DNS(qr=1, aa=1, qd=None,
-                        an=DNSRR(rrname="host.local", type="A", rclass=0x8001, rdata="192.168.1.5")))
+                        an=DNSRR(rrname="host.local", type="A", cacheflush=1, rdata="192.168.1.5")))
 
 
 def tcp_dns(msg: bytes) -> bytes:
@@ -89,6 +90,12 @@ class DnsDetectionTest(unittest.TestCase):
                          Detection("DNS", "payload+port"))
         self.assertEqual(detect_app("TCP", 50000, 9953, tcp_dns(DNS_RESP)),
                          Detection("DNS", "payload"))
+
+    def test_mdns_samples_have_flag_bits(self):
+        # Bảo đảm gói mẫu thật sự chứa bit cờ mà test muốn kiểm tra
+        self.assertEqual(MDNS_QUERY[-2:], b"\x80\x01")          # Class của câu hỏi: QU + IN
+        self.assertEqual(struct.unpack("!H", MDNS_ANSWER[4:6])[0], 0)
+        self.assertIn(b"\x00\x01\x80\x01", MDNS_ANSWER)      # Type A, class: cache-flush + IN
 
     def test_mdns(self):
         self.assertEqual(detect_app("UDP", 5353, 5353, MDNS_QUERY), Detection("DNS", "payload+port"))

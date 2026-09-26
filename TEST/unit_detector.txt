@@ -2,6 +2,7 @@ test_dns_over_tcp (tests.test_detector.DnsDetectionTest.test_dns_over_tcp) ... o
 test_looks_like_dns_rejects (tests.test_detector.DnsDetectionTest.test_looks_like_dns_rejects) ... ok
 test_malformed_dns_on_port_53_still_labelled_by_port (tests.test_detector.DnsDetectionTest.test_malformed_dns_on_port_53_still_labelled_by_port) ... ok
 test_mdns (tests.test_detector.DnsDetectionTest.test_mdns) ... ok
+test_mdns_samples_have_flag_bits (tests.test_detector.DnsDetectionTest.test_mdns_samples_have_flag_bits) ... ok
 test_non_standard_port (tests.test_detector.DnsDetectionTest.test_non_standard_port) ... ok
 test_standard_port (tests.test_detector.DnsDetectionTest.test_standard_port) ... ok
 test_empty_payload (tests.test_detector.GeneralDetectionTest.test_empty_payload) ... ok
@@ -24,6 +25,6 @@ test_strong_commands_any_port (tests.test_detector.SmtpDetectionTest.test_strong
 test_weak_signals_need_smtp_port (tests.test_detector.SmtpDetectionTest.test_weak_signals_need_smtp_port) ... ok
 
 ----------------------------------------------------------------------
-Ran 23 tests in 0.265s
+Ran 24 tests in 0.284s
 
 OK
