@@ -178,7 +178,22 @@ class ResponseTest(unittest.TestCase):
     def test_inconsistent_codes_counted(self):
         s = parse_smtp(b"250-first\r\n550 second\r\nnot a response\r\n")
         self.assertEqual(s["response"]["code"], 250)
+        self.assertFalse(s["response"]["complete"])
         self.assertEqual(s["malformed_lines"], 2)
+
+    def test_pipelined_responses(self):
+        # Server trả lời liền MAIL, RCPT, DATA trong một gói: ba phản hồi riêng
+        s = parse_smtp(b"250 2.1.0 Ok\r\n250 2.1.5 Ok\r\n354 End data with <CR><LF>.<CR><LF>\r\n")
+        self.assertEqual([r["code"] for r in s["responses"]], [250, 250, 354])
+        self.assertEqual([r["enhanced_status"] for r in s["responses"][:2]], ["2.1.0", "2.1.5"])
+        self.assertFalse(any(r["multiline"] for r in s["responses"]))
+        self.assertEqual(s["malformed_lines"], 0)
+        self.assertEqual(s["response"]["code"], 250)
+
+    def test_multiline_then_single_in_one_packet(self):
+        s = parse_smtp(b"250-mx\r\n250 PIPELINING\r\n221 Bye\r\n")
+        self.assertEqual([(r["code"], r["multiline"]) for r in s["responses"]],
+                         [(250, True), (221, False)])
 
     def test_auth_challenge(self):
         r = parse_smtp(b"334 VXNlcm5hbWU6\r\n")["response"]   # base64 của "Username:"

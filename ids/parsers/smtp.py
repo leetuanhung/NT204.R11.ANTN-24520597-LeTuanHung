@@ -148,33 +148,46 @@ def _parse_requests(lines: list[str], smtp: dict, max_text: int) -> None:
     smtp["unknown_lines"] = unknown
 
 
-def _parse_responses(lines: list[str], smtp: dict) -> None:
-    parsed = []
-    malformed = 0
-    code = None
-    for line in lines:
-        m = _RESPONSE_LINE.fullmatch(line)
-        if not m or (code is not None and int(m.group(1)) != code):
-            malformed += 1                # Không đúng dạng, hoặc mã khác với dòng đầu
-            continue
-        code = int(m.group(1))
-        parsed.append((m.group(2), m.group(3)))
-
-    texts = [text for _, text in parsed][:MAX_LINES]
+def _build_response(code: int, texts: list[str], complete: bool) -> dict:
     response = {
         "code": code,
         "parameter": texts[0],
-        "lines": texts,
-        "multiline": len(parsed) > 1,
-        # Dòng cuối của phản hồi nhiều dòng dùng dấu cách; dấu gạch nghĩa là còn dòng ở gói sau
-        "complete": parsed[-1][0] != "-",
+        "lines": texts[:MAX_LINES],
+        "multiline": len(texts) > 1,
+        "complete": complete,
     }
     if m := _ENHANCED.match(texts[0]):
         response["enhanced_status"] = m.group(1)
-    if code == 250 and len(parsed) > 1:
+    if code == 250 and len(texts) > 1:
         # Trả lời EHLO: dòng đầu là tên máy chủ, các dòng sau là tính năng hỗ trợ
-        response["extensions"] = [t.upper() for t in texts[1:]]
-    smtp["response"] = response
+        response["extensions"] = [t.upper() for t in texts[1:MAX_LINES]]
+    return response
+
+
+def _parse_responses(lines: list[str], smtp: dict) -> None:
+    """Một gói có thể chứa nhiều phản hồi (server trả lời liền các lệnh gửi theo PIPELINING).
+
+    Theo RFC 5321 mục 4.2.1: dòng "ddd-..." còn dòng tiếp theo, dòng "ddd ..." là dòng cuối
+    của một phản hồi. Dòng sau dòng cuối bắt đầu một phản hồi mới.
+    """
+    responses = []
+    code, texts = None, []
+    malformed = 0
+    for line in lines:
+        m = _RESPONSE_LINE.fullmatch(line)
+        if not m or (code is not None and int(m.group(1)) != code):
+            malformed += 1                # Sai định dạng, hoặc đổi mã giữa một phản hồi nhiều dòng
+            continue
+        code = int(m.group(1))
+        texts.append(m.group(3))
+        if m.group(2) != "-":             # Dòng cuối của phản hồi này
+            responses.append(_build_response(code, texts, complete=True))
+            code, texts = None, []
+    if texts:                             # Phản hồi nhiều dòng còn dở, phần sau ở gói khác
+        responses.append(_build_response(code, texts, complete=False))
+
+    smtp["response"] = responses[0]       # Phản hồi đầu tiên, giống Wireshark
+    smtp["responses"] = responses[:MAX_LINES]
     smtp["malformed_lines"] = malformed
 
 

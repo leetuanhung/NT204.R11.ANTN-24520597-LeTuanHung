@@ -29,8 +29,10 @@ test_enhanced_status_code (tests.test_smtp.ResponseTest.test_enhanced_status_cod
 test_inconsistent_codes_counted (tests.test_smtp.ResponseTest.test_inconsistent_codes_counted) ... ok
 test_multiline_ehlo_response (tests.test_smtp.ResponseTest.test_multiline_ehlo_response) ... ok
 test_multiline_split_across_packets (tests.test_smtp.ResponseTest.test_multiline_split_across_packets) ... ok
+test_multiline_then_single_in_one_packet (tests.test_smtp.ResponseTest.test_multiline_then_single_in_one_packet) ... ok
+test_pipelined_responses (tests.test_smtp.ResponseTest.test_pipelined_responses) ... ok
 
 ----------------------------------------------------------------------
-Ran 31 tests in 0.002s
+Ran 33 tests in 0.002s
 
 OK
