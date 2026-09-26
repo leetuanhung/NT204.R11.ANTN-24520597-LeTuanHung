@@ -1,0 +1,35 @@
+test_binary_body_does_not_crash (tests.test_http.BodyTest.test_binary_body_does_not_crash) ... ok
+test_chunked (tests.test_http.BodyTest.test_chunked) ... ok
+test_chunked_incomplete (tests.test_http.BodyTest.test_chunked_incomplete) ... ok
+test_cl_te_conflict_flag (tests.test_http.BodyTest.test_cl_te_conflict_flag) ... ok
+test_conflicting_content_length (tests.test_http.BodyTest.test_conflicting_content_length) ... ok
+test_extra_bytes_after_body_ignored (tests.test_http.BodyTest.test_extra_bytes_after_body_ignored) ... ok
+test_headers_cut_off (tests.test_http.BodyTest.test_headers_cut_off) ... ok
+test_invalid_content_length (tests.test_http.BodyTest.test_invalid_content_length) ... ok
+test_long_body_text_capped (tests.test_http.BodyTest.test_long_body_text_capped) ... ok
+test_partial_body (tests.test_http.BodyTest.test_partial_body) ... ok
+test_repeated_same_content_length_is_ok (tests.test_http.BodyTest.test_repeated_same_content_length_is_ok) ... ok
+test_response_without_length_is_unknown (tests.test_http.BodyTest.test_response_without_length_is_unknown) ... ok
+test_absolute_uri_via_proxy (tests.test_http.HeaderTest.test_absolute_uri_via_proxy) ... ok
+test_all_headers_kept (tests.test_http.HeaderTest.test_all_headers_kept) ... ok
+test_duplicate_headers_joined (tests.test_http.HeaderTest.test_duplicate_headers_joined) ... ok
+test_header_names_case_insensitive (tests.test_http.HeaderTest.test_header_names_case_insensitive) ... ok
+test_lf_only_line_endings (tests.test_http.HeaderTest.test_lf_only_line_endings) ... ok
+test_malformed_header_lines_counted (tests.test_http.HeaderTest.test_malformed_header_lines_counted) ... ok
+test_no_host_no_full_uri (tests.test_http.HeaderTest.test_no_host_no_full_uri) ... ok
+test_non_ascii_header_does_not_crash (tests.test_http.HeaderTest.test_non_ascii_header_does_not_crash) ... ok
+test_obs_fold_continuation (tests.test_http.HeaderTest.test_obs_fold_continuation) ... ok
+test_value_whitespace_trimmed (tests.test_http.HeaderTest.test_value_whitespace_trimmed) ... ok
+test_continuation (tests.test_http.NotHttpStartTest.test_continuation) ... ok
+test_empty_payload_is_error (tests.test_http.NotHttpStartTest.test_empty_payload_is_error) ... ok
+test_http_get (tests.test_http.RequiredCasesTest.test_http_get) ... ok
+test_http_post_with_body (tests.test_http.RequiredCasesTest.test_http_post_with_body) ... ok
+test_http_response_status_and_headers (tests.test_http.RequiredCasesTest.test_http_response_status_and_headers) ... ok
+test_all_methods (tests.test_http.StatusLineTest.test_all_methods) ... ok
+test_empty_phrase_allowed (tests.test_http.StatusLineTest.test_empty_phrase_allowed) ... ok
+test_phrase_with_spaces (tests.test_http.StatusLineTest.test_phrase_with_spaces) ... ok
+
+----------------------------------------------------------------------
+Ran 30 tests in 0.002s
+
+OK
