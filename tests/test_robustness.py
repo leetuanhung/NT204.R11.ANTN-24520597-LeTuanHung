@@ -12,12 +12,13 @@ import random
 import tempfile
 import unittest
 
-from scapy.all import IP, TCP, UDP, Dot1Q, Ether, IPOption_Router_Alert, Raw, wrpcap
+from scapy.all import DNS, DNSQR, IP, TCP, UDP, Dot1Q, Ether, IPOption_Router_Alert, Raw, wrpcap
 
 from ids.capture import capture_pcap
+from ids.detector import detect_app
 from ids.parsers.errors import ParseError
 from ids.parsers.network import ETHERTYPE_IPV4, parse_ipv4, parse_link
-from ids.parsers.transport import parse_tcp
+from ids.parsers.transport import parse_tcp, parse_udp
 from main import PacketPrinter
 
 ETH = Ether(src="aa:aa:aa:aa:aa:aa", dst="bb:bb:bb:bb:bb:bb")
@@ -27,6 +28,8 @@ SEEDS = [
     ETH / IP() / TCP(flags="PA") / b"GET / HTTP/1.1\r\nHost: a\r\n\r\n",
     ETH / Dot1Q(vlan=5) / IP(options=[IPOption_Router_Alert()]) / TCP() / Raw(b"x" * 50),
     ETH / IP() / UDP() / b"abc",
+    ETH / IP() / UDP(sport=5000, dport=53) / DNS(rd=1, qd=DNSQR(qname="example.com")),
+    ETH / IP() / TCP(sport=5000, dport=25, flags="PA") / b"EHLO client\r\n",
 ]
 
 
@@ -58,12 +61,35 @@ class ParserFuzzTest(unittest.TestCase):
                 _, ethertype, l3 = parse_link(data, linktype)
                 if ethertype == ETHERTYPE_IPV4:
                     ip, l4 = parse_ipv4(l3)
-                    if ip["proto"] == 6 and ip["frag_offset"] == 0:
-                        parse_tcp(l4)
+                    if ip["frag_offset"] == 0 and ip["proto"] in (6, 17):
+                        if ip["proto"] == 6:
+                            hdr, payload = parse_tcp(l4)
+                            transport = "TCP"
+                        else:
+                            hdr, payload = parse_udp(l4)
+                            transport = "UDP"
+                        detect_app(transport, hdr["srcport"], hdr["dstport"], payload)
             except ParseError:
                 pass                               # Lỗi có kiểm soát: chấp nhận
             except Exception as exc:               # Mọi lỗi khác là bug
                 self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | data={data.hex()}")
+
+
+class DetectorFuzzTest(unittest.TestCase):
+    def test_detector_never_raises(self):
+        """Detector nhận payload bất kỳ và không bao giờ được ném lỗi, kể cả ParseError."""
+        rng = random.Random(3)
+        seeds = [b"GET / HTTP/1.1\r\n\r\n", b"HTTP/1.1 200 OK\r\n", b"EHLO a\r\n",
+                 b"220 mx ESMTP\r\n", bytes(SEEDS[4][DNS]),
+                 b"\x00\x1d" + bytes(SEEDS[4][DNS])]           # DNS qua TCP
+        ports = [25, 53, 80, 5353, 8080, 12345, 40000]
+        for i in range(30000):
+            payload = mutate(rng, rng.choice(seeds))
+            transport = rng.choice(["TCP", "UDP"])
+            try:
+                detect_app(transport, rng.choice(ports), rng.choice(ports), payload)
+            except Exception as exc:
+                self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | payload={payload.hex()}")
 
 
 class PcapFuzzTest(unittest.TestCase):
