@@ -1,0 +1,36 @@
+test_bad_label_type (tests.test_dns.MalformedTest.test_bad_label_type) ... ok
+test_bad_rdata_does_not_stop_next_record (tests.test_dns.MalformedTest.test_bad_rdata_does_not_stop_next_record) ... ok
+test_counts_bigger_than_data (tests.test_dns.MalformedTest.test_counts_bigger_than_data) ... ok
+test_header_errors (tests.test_dns.MalformedTest.test_header_errors) ... ok
+test_keeps_parsed_parts (tests.test_dns.MalformedTest.test_keeps_parsed_parts) ... ok
+test_name_too_long (tests.test_dns.MalformedTest.test_name_too_long) ... ok
+test_pointer_loop (tests.test_dns.MalformedTest.test_pointer_loop) ... ok
+test_pointer_loop_between_two_names (tests.test_dns.MalformedTest.test_pointer_loop_between_two_names) ... ok
+test_pointer_out_of_packet (tests.test_dns.MalformedTest.test_pointer_out_of_packet) ... ok
+test_rdata_name_overflows_record (tests.test_dns.MalformedTest.test_rdata_name_overflows_record) ... ok
+test_rdlength_beyond_data (tests.test_dns.MalformedTest.test_rdlength_beyond_data) ... ok
+test_trailing_bytes (tests.test_dns.MalformedTest.test_trailing_bytes) ... ok
+test_txt_string_overflow (tests.test_dns.MalformedTest.test_txt_string_overflow) ... ok
+test_compression_pointer (tests.test_dns.NameTest.test_compression_pointer) ... ok
+test_mdns_flags (tests.test_dns.NameTest.test_mdns_flags) ... ok
+test_root_name (tests.test_dns.NameTest.test_root_name) ... ok
+test_special_bytes_escaped (tests.test_dns.NameTest.test_special_bytes_escaped) ... ok
+test_aaaa (tests.test_dns.RecordTypesTest.test_aaaa) ... ok
+test_all_sections (tests.test_dns.RecordTypesTest.test_all_sections) ... ok
+test_mx (tests.test_dns.RecordTypesTest.test_mx) ... ok
+test_ns_ptr (tests.test_dns.RecordTypesTest.test_ns_ptr) ... ok
+test_nxdomain_with_soa_in_authority (tests.test_dns.RecordTypesTest.test_nxdomain_with_soa_in_authority) ... ok
+test_opt_edns (tests.test_dns.RecordTypesTest.test_opt_edns) ... ok
+test_srv (tests.test_dns.RecordTypesTest.test_srv) ... ok
+test_txt_multiple_strings (tests.test_dns.RecordTypesTest.test_txt_multiple_strings) ... ok
+test_unknown_type_kept_as_hex (tests.test_dns.RecordTypesTest.test_unknown_type_kept_as_hex) ... ok
+test_dns_query_domain_and_type (tests.test_dns.RequiredCasesTest.test_dns_query_domain_and_type) ... ok
+test_dns_response_answers (tests.test_dns.RequiredCasesTest.test_dns_response_answers) ... ok
+test_other_query_types (tests.test_dns.RequiredCasesTest.test_other_query_types) ... ok
+test_dns_over_tcp (tests.test_dns.TcpTest.test_dns_over_tcp) ... ok
+test_dns_over_tcp_split_segment (tests.test_dns.TcpTest.test_dns_over_tcp_split_segment) ... ok
+
+----------------------------------------------------------------------
+Ran 31 tests in 0.007s
+
+OK
