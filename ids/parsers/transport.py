@@ -1,7 +1,8 @@
-"""Transport parser: đọc header TCP từ byte thô.
+"""Transport parser: đọc header TCP và UDP từ byte thô.
 
-Tên trường theo Wireshark display filter (https://www.wireshark.org/docs/dfref/t/tcp.html),
-bỏ tiền tố "tcp." và đặt trong nhóm "tcp". Ví dụ tcp.flags.syn -> tcp["flags"]["syn"].
+Tên trường theo Wireshark display filter
+(https://www.wireshark.org/docs/dfref/t/tcp.html, https://www.wireshark.org/docs/dfref/u/udp.html),
+bỏ tiền tố "tcp." / "udp." và đặt trong nhóm tương ứng. Ví dụ tcp.flags.syn -> tcp["flags"]["syn"].
 """
 
 import struct
@@ -9,6 +10,7 @@ import struct
 from ids.parsers.errors import ParseError
 
 TCP_MIN_HEADER = 20
+UDP_HEADER = 8
 MAX_PAYLOAD_HEX = 1024     # Số byte payload tối đa ghi ra dưới dạng hex
 
 # (tên trường Wireshark, bit trong 12 bit flags, ký tự viết tắt, nhãn in hoa)
@@ -31,6 +33,19 @@ _LABEL = {name: label for name, _, _, label in TCP_FLAGS}
 
 # Mã kind của TCP option (IANA)
 OPT_EOL, OPT_NOP, OPT_MSS, OPT_WSCALE, OPT_SACK_PERM, OPT_SACK, OPT_TIMESTAMP = 0, 1, 2, 3, 4, 5, 8
+
+
+def _payload_fields(payload: bytes, max_payload: int) -> dict:
+    """Các trường mô tả payload, dùng chung cho TCP và UDP.
+
+    Chỉ ghi tối đa max_payload byte dưới dạng hex để file log không phình to;
+    payload đầy đủ vẫn được trả về riêng cho tầng ứng dụng.
+    """
+    return {
+        "len": len(payload),
+        "payload": payload[:max_payload].hex(),
+        "payload_truncated": len(payload) > max_payload,
+    }
 
 
 def parse_tcp_options(raw: bytes) -> dict:
@@ -117,9 +132,39 @@ def parse_tcp(data: bytes, max_payload: int = MAX_PAYLOAD_HEX) -> tuple[dict, by
         # và nhiều card mạng tự tính checksum khi gửi (checksum offload)
         "checksum": checksum,
         "urgent_pointer": urgent,
-        "len": len(payload),
         "options": parse_tcp_options(data[TCP_MIN_HEADER:hdr_len]),
-        "payload": payload[:max_payload].hex(),
-        "payload_truncated": len(payload) > max_payload,
+        **_payload_fields(payload, max_payload),
     }
     return tcp, payload
+
+
+def parse_udp(data: bytes, max_payload: int = MAX_PAYLOAD_HEX) -> tuple[dict, bytes]:
+    """Đọc header UDP 8 byte. Trả về (udp, payload).
+
+    Header: srcport(2) | dstport(2) | length(2) | checksum(2)
+    Trường length tính cả 8 byte header, nên payload dài length - 8.
+    """
+    if len(data) < UDP_HEADER:
+        raise ParseError(f"UDP: cần ít nhất {UDP_HEADER} byte, chỉ có {len(data)}")
+
+    srcport, dstport, length, checksum = struct.unpack("!HHHH", data[:UDP_HEADER])
+    if length < UDP_HEADER:
+        raise ParseError(f"UDP: length={length} nhỏ hơn header {UDP_HEADER} byte")
+
+    # length lớn hơn số byte có được: gói bị cắt, lấy phần còn lại.
+    # length nhỏ hơn: các byte thừa phía sau không thuộc gói UDP nên bỏ đi.
+    truncated = length > len(data)
+    payload = data[UDP_HEADER:length]
+
+    udp = {
+        "srcport": srcport,
+        "dstport": dstport,
+        "length": length,
+        # Không kiểm tra checksum, cùng lý do như TCP (cần pseudo-header, checksum offload).
+        # Riêng giá trị 0 trong IPv4 nghĩa là người gửi không tính checksum (RFC 768).
+        "checksum": checksum,
+        "checksum_zero": checksum == 0,
+        "truncated": truncated,
+        **_payload_fields(payload, max_payload),
+    }
+    return udp, payload
