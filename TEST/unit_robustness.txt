@@ -1,9 +1,11 @@
 test_detector_never_raises (tests.test_robustness.DetectorFuzzTest.test_detector_never_raises)
 Detector nhận payload bất kỳ và không bao giờ được ném lỗi, kể cả ParseError. ... ok
+test_http_parser_only_raises_parse_error (tests.test_robustness.HttpFuzzTest.test_http_parser_only_raises_parse_error)
+Payload HTTP bị làm hỏng: parser chỉ được phép ném ParseError. ... ok
 test_mutated_packets_only_raise_parse_error (tests.test_robustness.ParserFuzzTest.test_mutated_packets_only_raise_parse_error) ... ok
 test_corrupted_pcap_files_do_not_crash (tests.test_robustness.PcapFuzzTest.test_corrupted_pcap_files_do_not_crash) ... ok
 
 ----------------------------------------------------------------------
-Ran 3 tests in 1.573s
+Ran 4 tests in 2.011s
 
 OK

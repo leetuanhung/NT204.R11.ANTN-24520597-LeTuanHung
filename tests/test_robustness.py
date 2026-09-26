@@ -17,6 +17,7 @@ from scapy.all import DNS, DNSQR, IP, TCP, UDP, Dot1Q, Ether, IPOption_Router_Al
 from ids.capture import capture_pcap
 from ids.detector import detect_app
 from ids.parsers.errors import ParseError
+from ids.parsers.http import parse_http
 from ids.parsers.network import ETHERTYPE_IPV4, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
 from main import PacketPrinter
@@ -30,6 +31,7 @@ SEEDS = [
     ETH / IP() / UDP() / b"abc",
     ETH / IP() / UDP(sport=5000, dport=53) / DNS(rd=1, qd=DNSQR(qname="example.com")),
     ETH / IP() / TCP(sport=5000, dport=25, flags="PA") / b"EHLO client\r\n",
+    ETH / IP() / TCP(sport=80, dport=5000, flags="PA") / b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nhi",
 ]
 
 
@@ -68,7 +70,9 @@ class ParserFuzzTest(unittest.TestCase):
                         else:
                             hdr, payload = parse_udp(l4)
                             transport = "UDP"
-                        detect_app(transport, hdr["srcport"], hdr["dstport"], payload)
+                        app = detect_app(transport, hdr["srcport"], hdr["dstport"], payload)
+                        if app.protocol == "HTTP":
+                            parse_http(payload)
             except ParseError:
                 pass                               # Lỗi có kiểm soát: chấp nhận
             except Exception as exc:               # Mọi lỗi khác là bug
@@ -90,6 +94,27 @@ class DetectorFuzzTest(unittest.TestCase):
                 detect_app(transport, rng.choice(ports), rng.choice(ports), payload)
             except Exception as exc:
                 self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | payload={payload.hex()}")
+
+
+class HttpFuzzTest(unittest.TestCase):
+    def test_http_parser_only_raises_parse_error(self):
+        """Payload HTTP bị làm hỏng: parser chỉ được phép ném ParseError."""
+        rng = random.Random(4)
+        seeds = [
+            b"GET /a?b=c HTTP/1.1\r\nHost: x\r\nCookie: s=1\r\n\r\n",
+            b"POST /p HTTP/1.1\r\nHost: x\r\nContent-Length: 5\r\n\r\nhello",
+            b"HTTP/1.1 200 OK\r\nSet-Cookie: a=1\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n",
+            b"HTTP/1.0 404 Not Found\n\nbody",
+        ]
+        for i in range(30000):
+            payload = mutate(rng, rng.choice(seeds))
+            try:
+                result = parse_http(payload)
+                self.assertIn(result["type"], ("request", "response", "continuation"))
+            except ParseError:
+                pass
+            except Exception as exc:
+                self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | payload={payload!r}")
 
 
 class PcapFuzzTest(unittest.TestCase):
