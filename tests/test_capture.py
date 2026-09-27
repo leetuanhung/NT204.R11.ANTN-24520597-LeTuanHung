@@ -4,6 +4,7 @@ Chạy:  python -m unittest -v tests.test_capture
 Các file PCAP mẫu được tạo tạm thời bằng Scapy, không cần quyền root.
 """
 
+import json
 import logging
 import os
 import subprocess
@@ -183,6 +184,31 @@ class MainCliTest(unittest.TestCase):
         r = self.run_main("--interface", "khong_co_card_nay0", "--count", "1")
         self.assertNotEqual(r.returncode, 0)
         self.assertNotIn("Traceback", r.stderr)
+
+    def test_error_does_not_overwrite_previous_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = os.path.join(tmp, "events.jsonl")
+            with open(out, "w") as f:
+                f.write('{"packet_id":1}\n')
+            for args in (["--pcap", "khong_ton_tai.pcap"], ["--interface", "khong_co_card_nay0"]):
+                with self.subTest(args=args):
+                    r = self.run_main(*args, "--output", out)
+                    self.assertNotEqual(r.returncode, 0)
+                    with open(out) as f:
+                        self.assertEqual(f.read(), '{"packet_id":1}\n')
+
+    def test_writes_jsonl(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            pcap, out = os.path.join(tmp, "a.pcap"), os.path.join(tmp, "events.jsonl")
+            wrpcap(pcap, make_packets())
+            r = self.run_main("--pcap", pcap, "--output", out, "--quiet")
+            self.assertEqual(r.returncode, 0, r.stderr)
+            self.assertEqual(r.stdout, "")                    # --quiet: không in từng gói
+            self.assertIn("ghi 2 sự kiện", r.stderr)
+            with open(out, encoding="utf-8") as f:
+                events = [json.loads(line) for line in f]
+            self.assertEqual([e["packet_id"] for e in events], [1, 2])
+            self.assertEqual([e["transport"] for e in events], ["TCP", "UDP"])
 
     def test_requires_mode(self):
         r = self.run_main()

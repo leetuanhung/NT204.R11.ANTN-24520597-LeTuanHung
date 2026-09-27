@@ -22,7 +22,8 @@ from ids.parsers.http import parse_http
 from ids.parsers.smtp import parse_smtp
 from ids.parsers.network import ETHERTYPE_IPV4, parse_ipv4, parse_link
 from ids.parsers.transport import parse_tcp, parse_udp
-from main import PacketPrinter
+from ids.pipeline import Pipeline
+from main import summarize
 
 ETH = Ether(src="aa:aa:aa:aa:aa:aa", dst="bb:bb:bb:bb:bb:bb")
 SEEDS = [
@@ -204,7 +205,8 @@ class PcapFuzzTest(unittest.TestCase):
                 f.write(data)
             try:
                 with contextlib.redirect_stdout(io.StringIO()):
-                    capture_pcap(path, PacketPrinter())
+                    pipeline = Pipeline()
+                    capture_pcap(path, lambda raw: print(summarize(pipeline.process(raw))))
             except Exception as exc:
                 self.fail(f"Lần {i}: {type(exc).__name__}: {exc}")
 

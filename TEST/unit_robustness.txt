@@ -10,6 +10,6 @@ test_smtp_parser_only_raises_parse_error (tests.test_robustness.SmtpFuzzTest.tes
 Payload SMTP bị làm hỏng: chỉ được ném ParseError, và không bao giờ lộ mật khẩu. ... ok
 
 ----------------------------------------------------------------------
-Ran 6 tests in 3.106s
+Ran 6 tests in 3.158s
 
 OK
