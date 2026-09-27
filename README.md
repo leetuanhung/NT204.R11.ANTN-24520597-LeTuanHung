@@ -43,6 +43,36 @@ Tùy gói, sự kiện có thêm các nhóm theo giao thức: `eth`, `ip`, `tcp`
 Tên trường trong mỗi nhóm theo Wireshark display filter, bỏ tiền tố giao thức.
 Ví dụ `tcp.flags.syn` là `event["tcp"]["flags"]["syn"]`.
 
+## Test case bắt buộc (mục 9)
+
+Chạy lại toàn bộ, hoặc chỉ một số case:
+
+```bash
+python TEST/testcases.py          # tất cả
+python TEST/testcases.py 01 12    # chỉ case 01 và 12
+```
+
+Mỗi case có thư mục riêng trong `TEST/cases/` gồm `input.pcap` (đầu vào), `output.jsonl` (kết quả
+của `main.py`) và `result.md` (so sánh mong đợi với thực tế, kèm màn hình).
+
+| Case | Test | Yêu cầu | Kết quả |
+|---|---|---|---|
+| 01 | [TCP handshake](TEST/cases/01_tcp_handshake/result.md) | Nhận diện SYN, SYN/ACK, ACK | Đạt |
+| 02 | [TCP data](TEST/cases/02_tcp_data/result.md) | Parse TCP packet có payload | Đạt |
+| 03 | [UDP](TEST/cases/03_udp/result.md) | Parse UDP packet | Đạt |
+| 04 | [HTTP GET](TEST/cases/04_http_get/result.md) | Parse HTTP request | Đạt |
+| 05 | [HTTP POST](TEST/cases/05_http_post/result.md) | Parse HTTP request có body | Đạt |
+| 06 | [HTTP response](TEST/cases/06_http_response/result.md) | Parse status code và header | Đạt |
+| 07 | [DNS Query](TEST/cases/07_dns_query/result.md) | Parse domain và query type | Đạt |
+| 08 | [DNS Response](TEST/cases/08_dns_response/result.md) | Parse ít nhất một answer | Đạt |
+| 09 | [SMTP command](TEST/cases/09_smtp_command/result.md) | Parse HELO/EHLO, MAIL FROM, RCPT TO | Đạt |
+| 10 | [SMTP response](TEST/cases/10_smtp_response/result.md) | Parse SMTP status code | Đạt |
+| 11 | [Unknown protocol](TEST/cases/11_unknown_protocol/result.md) | Không crash | Đạt |
+| 12 | [Malformed packet](TEST/cases/12_malformed_packet/result.md) | Không crash (kèm gói cuối bị cắt cụt trong file) | Đạt |
+| 13 | [HTTP trên port 4444](TEST/cases/13_http_non_standard_port/result.md) | Điểm thưởng mục 5: nhận diện trên port không chuẩn | Đạt |
+
+Kết quả unit test của từng module nằm trong các file `TEST/unit_*.txt`.
+
 ## Chạy unit test
 
 ```bash
@@ -64,11 +94,11 @@ ids/parsers/smtp.py  # Parse lệnh, phản hồi và nội dung thư SMTP (tên
 ids/pipeline.py      # Ghép các tầng thành sự kiện chuẩn hóa
 ids/output.py        # Ghi sự kiện ra file JSON Lines
 tests/               # Unit test (unittest)
-TEST/                # Kết quả các test case
+TEST/                # Kết quả unit test, test case (cases/) và script chạy test case
 ```
 
 ## Sử dụng công cụ AI
 
 | Công cụ | Mục đích | Phần mã nguồn |
 |---|---|---|
-| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `ids/parsers/http.py`, `ids/parsers/dns.py`, `ids/parsers/smtp.py`, `ids/pipeline.py`, `ids/output.py`, `main.py`, các file trong `tests/` |
+| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `ids/parsers/http.py`, `ids/parsers/dns.py`, `ids/parsers/smtp.py`, `ids/pipeline.py`, `ids/output.py`, `main.py`, các file trong `tests/`, `TEST/testcases.py` |
