@@ -6,6 +6,7 @@ Dùng seed cố định để lần chạy nào cũng cho cùng kết quả.
 
 import contextlib
 import io
+import json
 import logging
 import os
 import random
@@ -14,7 +15,7 @@ import unittest
 
 from scapy.all import DNS, DNSQR, DNSRR, DNSRRMX, DNSRRSOA, IP, TCP, UDP, Dot1Q, Ether, IPOption_Router_Alert, Raw, wrpcap
 
-from ids.capture import capture_pcap
+from ids.capture import RawPacket, capture_pcap
 from ids.detector import detect_app
 from ids.parsers.dns import parse_dns
 from ids.parsers.errors import ParseError
@@ -171,6 +172,27 @@ class SmtpFuzzTest(unittest.TestCase):
                 pass
             except Exception as exc:
                 self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | payload={payload!r}")
+
+
+class PipelineFuzzTest(unittest.TestCase):
+    def test_pipeline_never_raises_and_output_is_json(self):
+        """Mọi gói (kể cả rác) đều cho ra event ghi được thành một dòng JSON."""
+        logging.disable(logging.CRITICAL)
+        self.addCleanup(logging.disable, logging.NOTSET)
+        rng = random.Random(7)
+        seeds = [bytes(p) for p in SEEDS]
+        pipeline = Pipeline()
+        for i in range(20000):
+            data = mutate(rng, rng.choice(seeds))
+            raw = RawPacket(timestamp=1.0, data=data, linktype=rng.choice([1, 1, 101, 113]), source="fuzz")
+            try:
+                event = pipeline.process(raw)
+                line = json.dumps(event, ensure_ascii=False)
+            except Exception as exc:
+                self.fail(f"Lần {i}: {type(exc).__name__}: {exc} | data={data.hex()}")
+            self.assertNotIn("\n", line)                  # Đúng một dòng
+            self.assertFalse(any(e.startswith("internal:") for e in event["errors"]),
+                             f"Lần {i}: bug trong parser: {event['errors']} | data={data.hex()}")
 
 
 class PcapFuzzTest(unittest.TestCase):
