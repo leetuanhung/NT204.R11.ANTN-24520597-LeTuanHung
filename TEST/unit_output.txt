@@ -1,0 +1,13 @@
+test_closed_even_on_error (tests.test_output.JsonlWriterTest.test_closed_even_on_error) ... ok
+test_creates_folder (tests.test_output.JsonlWriterTest.test_creates_folder) ... ok
+test_flushed_before_close (tests.test_output.JsonlWriterTest.test_flushed_before_close) ... ok
+test_nested_values_and_newlines_stay_on_one_line (tests.test_output.JsonlWriterTest.test_nested_values_and_newlines_stay_on_one_line) ... ok
+test_one_json_object_per_line (tests.test_output.JsonlWriterTest.test_one_json_object_per_line) ... ok
+test_overwrite_and_append (tests.test_output.JsonlWriterTest.test_overwrite_and_append) ... ok
+test_read_jsonl_skips_blank_lines (tests.test_output.JsonlWriterTest.test_read_jsonl_skips_blank_lines) ... ok
+test_unicode_kept (tests.test_output.JsonlWriterTest.test_unicode_kept) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.002s
+
+OK
