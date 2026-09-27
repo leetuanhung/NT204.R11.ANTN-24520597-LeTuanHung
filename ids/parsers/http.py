@@ -7,6 +7,8 @@ Parser làm việc trên TỪNG GÓI, không ghép luồng TCP. Vì vậy một 
 có thể chỉ được thấy một phần; các trường header_complete và body_complete cho biết điều đó.
 """
 
+import base64
+import binascii
 import re
 
 from ids.parsers.errors import ParseError
@@ -75,6 +77,25 @@ def _parse_content_length(values: list[str]) -> tuple[int | None, bool]:
     return int(value), False
 
 
+def _mask_authorization(value: str) -> tuple[str, dict]:
+    """Che thông tin đăng nhập trong header Authorization / Proxy-Authorization.
+
+    "Basic base64(user:pass)" -> giữ tên đăng nhập, bỏ mật khẩu. Kiểu khác (Bearer, Digest...)
+    chỉ giữ tên kiểu. File log của IDS không được trở thành nơi lưu mật khẩu hay token.
+    """
+    scheme, _, credentials = value.partition(" ")
+    auth = {"scheme": scheme}
+    if scheme.lower() == "basic" and credentials:
+        try:
+            decoded = base64.b64decode(credentials.strip(), validate=True).decode("utf-8", "replace")
+            username, sep, password = decoded.partition(":")
+            auth["username"] = username
+            auth["password_present"] = bool(sep and password)
+        except (binascii.Error, ValueError):
+            auth["decode_error"] = True
+    return (f"{scheme} ***" if credentials else scheme), auth
+
+
 def parse_http(payload: bytes, max_body: int = MAX_BODY_TEXT) -> dict:
     """Parse payload HTTP/1.x của một gói.
 
@@ -141,6 +162,10 @@ def parse_http(payload: bytes, max_body: int = MAX_BODY_TEXT) -> dict:
         headers[key] = f"{headers[key]}, {val}" if key in headers else val
         last_name = key
 
+    for header in ("authorization", "proxy-authorization"):
+        if header in headers:
+            headers[header], auth = _mask_authorization(headers[header])
+            http.setdefault("auth", auth)
     http["headers"] = headers
     http["header_complete"] = header_complete
     http["malformed_lines"] = malformed_lines

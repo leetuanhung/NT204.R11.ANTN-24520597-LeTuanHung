@@ -1,3 +1,8 @@
+test_bad_base64 (tests.test_http.AuthorizationTest.test_bad_base64) ... ok
+test_basic_credentials_masked (tests.test_http.AuthorizationTest.test_basic_credentials_masked) ... ok
+test_bearer_token_masked (tests.test_http.AuthorizationTest.test_bearer_token_masked) ... ok
+test_proxy_authorization_masked (tests.test_http.AuthorizationTest.test_proxy_authorization_masked) ... ok
+test_username_without_password (tests.test_http.AuthorizationTest.test_username_without_password) ... ok
 test_binary_body_does_not_crash (tests.test_http.BodyTest.test_binary_body_does_not_crash) ... ok
 test_chunked (tests.test_http.BodyTest.test_chunked) ... ok
 test_chunked_incomplete (tests.test_http.BodyTest.test_chunked_incomplete) ... ok
@@ -31,6 +36,6 @@ test_empty_phrase_allowed (tests.test_http.StatusLineTest.test_empty_phrase_allo
 test_phrase_with_spaces (tests.test_http.StatusLineTest.test_phrase_with_spaces) ... ok
 
 ----------------------------------------------------------------------
-Ran 31 tests in 0.001s
+Ran 36 tests in 0.002s
 
 OK

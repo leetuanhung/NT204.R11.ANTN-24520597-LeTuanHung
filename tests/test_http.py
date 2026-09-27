@@ -3,6 +3,8 @@
 Chạy:  python -m unittest -v tests.test_http
 """
 
+import base64
+import json
 import unittest
 
 from ids.parsers.errors import ParseError
@@ -65,7 +67,8 @@ class RequiredCasesTest(unittest.TestCase):
         self.assertEqual(h["content_type"], "application/x-www-form-urlencoded")
         self.assertEqual(h["content_length"], len(POST_BODY))
         self.assertFalse(h["content_length_invalid"])
-        self.assertEqual(h["authorization"], "Basic YWRtaW46c2VjcmV0")
+        self.assertEqual(h["authorization"], "Basic ***")          # Mật khẩu bị che
+        self.assertEqual(h["auth"], {"scheme": "Basic", "username": "admin", "password_present": True})
         self.assertEqual(h["x_forwarded_for"], "203.0.113.9")
         self.assertEqual(h["file_data"], "username=admin&password=secret")
         self.assertEqual(h["body_len"], len(POST_BODY))
@@ -129,6 +132,44 @@ class HeaderTest(unittest.TestCase):
     def test_non_ascii_header_does_not_crash(self):
         h = parse_http(b"GET / HTTP/1.1\r\nUser-Agent: \xff\xfe\xc3\x28\r\n\r\n")
         self.assertEqual(len(h["user_agent"]), 4)   # latin-1: mỗi byte thành một ký tự
+
+
+class AuthorizationTest(unittest.TestCase):
+    def assert_not_leaked(self, h: dict, *secrets: str) -> None:
+        text = json.dumps(h)
+        for secret in secrets:
+            self.assertNotIn(secret, text)
+
+    def test_basic_credentials_masked(self):
+        blob = base64.b64encode(b"alice:S3cret!").decode()
+        h = parse_http(f"GET / HTTP/1.1\r\nAuthorization: Basic {blob}\r\n\r\n".encode())
+        self.assertEqual(h["authorization"], "Basic ***")
+        self.assertEqual(h["headers"]["authorization"], "Basic ***")
+        self.assertEqual(h["auth"]["username"], "alice")
+        self.assert_not_leaked(h, "S3cret!", blob)
+
+    def test_bearer_token_masked(self):
+        h = parse_http(b"GET / HTTP/1.1\r\nAuthorization: Bearer eyJhbGciOi.secret.token\r\n\r\n")
+        self.assertEqual(h["authorization"], "Bearer ***")
+        self.assertEqual(h["auth"], {"scheme": "Bearer"})
+        self.assert_not_leaked(h, "eyJhbGciOi")
+
+    def test_proxy_authorization_masked(self):
+        blob = base64.b64encode(b"bob:pw").decode()
+        h = parse_http(f"GET http://a/ HTTP/1.1\r\nProxy-Authorization: Basic {blob}\r\n\r\n".encode())
+        self.assertEqual(h["headers"]["proxy-authorization"], "Basic ***")
+        self.assertEqual(h["auth"]["username"], "bob")
+        self.assert_not_leaked(h, blob)
+
+    def test_bad_base64(self):
+        h = parse_http(b"GET / HTTP/1.1\r\nAuthorization: Basic !!!\r\n\r\n")
+        self.assertTrue(h["auth"]["decode_error"])
+        self.assertEqual(h["authorization"], "Basic ***")
+
+    def test_username_without_password(self):
+        blob = base64.b64encode(b"guest").decode()
+        h = parse_http(f"GET / HTTP/1.1\r\nAuthorization: Basic {blob}\r\n\r\n".encode())
+        self.assertEqual(h["auth"], {"scheme": "Basic", "username": "guest", "password_present": False})
 
 
 class StatusLineTest(unittest.TestCase):
