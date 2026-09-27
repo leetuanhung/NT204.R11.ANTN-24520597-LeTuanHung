@@ -3,6 +3,7 @@
 Chạy:  python -m unittest -v tests.test_pipeline
 """
 
+import base64
 import json
 import logging
 import unittest
@@ -221,6 +222,41 @@ class MalformedTest(unittest.TestCase):
         self.assertTrue(e["malformed"])
         self.assertEqual(e["errors"], ["internal: RuntimeError: bug"])
         self.assertIn("tcp", e)                       # Tầng trước lỗi vẫn được giữ
+
+
+class CredentialRedactionTest(unittest.TestCase):
+    """Mật khẩu không được lọt vào event, kể cả qua payload hex ở tầng transport."""
+
+    def assert_no_secret(self, event: dict, secret: bytes) -> None:
+        text = json.dumps(event)
+        self.assertNotIn(secret.decode(), text)
+        self.assertNotIn(secret.hex(), text)
+
+    def test_smtp_auth_login_line(self):
+        blob = base64.b64encode(b"S3cret!pass")
+        e = Pipeline().process(raw(tcp(blob + b"\r\n", dport=25)))
+        self.assertEqual(e["smtp"]["type"], "auth_data")
+        self.assertEqual(e["tcp"]["payload"], "")
+        self.assertTrue(e["tcp"]["payload_redacted"])
+        self.assertEqual(e["tcp"]["len"], len(blob) + 2)     # Độ dài vẫn giữ để IDS phân tích
+        self.assert_no_secret(e, blob)
+
+    def test_smtp_auth_plain(self):
+        blob = base64.b64encode(b"\0alice\0S3cret!pass")
+        e = Pipeline().process(raw(tcp(b"AUTH PLAIN " + blob + b"\r\n", dport=25)))
+        self.assertEqual(e["smtp"]["auth"]["username"], "alice")
+        self.assert_no_secret(e, blob)
+
+    def test_http_basic_auth(self):
+        blob = base64.b64encode(b"admin:S3cret!pass")
+        e = Pipeline().process(raw(tcp(b"GET / HTTP/1.1\r\nAuthorization: Basic " + blob + b"\r\n\r\n")))
+        self.assertTrue(e["tcp"]["payload_redacted"])
+        self.assert_no_secret(e, blob)
+
+    def test_normal_packets_not_redacted(self):
+        e = Pipeline().process(raw(tcp(b"GET / HTTP/1.1\r\nHost: a\r\n\r\n")))
+        self.assertNotEqual(e["tcp"]["payload"], "")
+        self.assertNotIn("payload_redacted", e["tcp"])
 
 
 class StatsTest(unittest.TestCase):

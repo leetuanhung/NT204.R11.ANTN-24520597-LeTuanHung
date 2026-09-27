@@ -147,6 +147,11 @@ class Pipeline:
             self._error(event, str(exc))
             return
         event[group] = app
+        if self._carries_credentials(app):
+            # Parser ứng dụng đã che mật khẩu, nhưng payload hex ở tầng transport vẫn chứa nguyên
+            # văn. Xóa luôn phần đó, nếu không mật khẩu vẫn lộ trong file log (chỉ là ở dạng hex).
+            l4_fields["payload"] = ""
+            l4_fields["payload_redacted"] = True
         if app.get("malformed") is True:                # DNS đánh dấu hỏng nhưng vẫn giữ phần đã đọc
             self._error(event, f"DNS: {app.get('error')}")
 
@@ -155,6 +160,11 @@ class Pipeline:
     def _error(event: dict, message: str) -> None:
         event["malformed"] = True
         event["errors"].append(message)
+
+    @staticmethod
+    def _carries_credentials(app: dict) -> bool:
+        """HTTP có header Authorization, SMTP có lệnh AUTH hoặc dòng dữ liệu AUTH LOGIN."""
+        return "auth" in app or app.get("type") == "auth_data"
 
     @staticmethod
     def _is_unknown(event: dict) -> bool:

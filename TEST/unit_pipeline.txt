@@ -1,3 +1,7 @@
+test_http_basic_auth (tests.test_pipeline.CredentialRedactionTest.test_http_basic_auth) ... ok
+test_normal_packets_not_redacted (tests.test_pipeline.CredentialRedactionTest.test_normal_packets_not_redacted) ... ok
+test_smtp_auth_login_line (tests.test_pipeline.CredentialRedactionTest.test_smtp_auth_login_line) ... ok
+test_smtp_auth_plain (tests.test_pipeline.CredentialRedactionTest.test_smtp_auth_plain) ... ok
 test_common_fields_always_present (tests.test_pipeline.EventStructureTest.test_common_fields_always_present) ... ok
 test_json_serializable (tests.test_pipeline.EventStructureTest.test_json_serializable) ... ok
 test_packet_id_and_time (tests.test_pipeline.EventStructureTest.test_packet_id_and_time) ... ok
@@ -26,6 +30,6 @@ test_skip_unknown_keeps_malformed (tests.test_pipeline.UnknownTest.test_skip_unk
 test_skip_unknown_option (tests.test_pipeline.UnknownTest.test_skip_unknown_option) ... ok
 
 ----------------------------------------------------------------------
-Ran 26 tests in 0.024s
+Ran 30 tests in 0.026s
 
 OK
