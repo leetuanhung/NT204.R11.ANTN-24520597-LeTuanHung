@@ -2,6 +2,43 @@
 
 Bài tập 1 môn Hệ thống tìm kiếm, phát hiện và ngăn chặn xâm nhập (NT204).
 
+## Tổng quan
+
+Module thu thập gói tin (live hoặc từ file PCAP), phân tích các giao thức và ghi mỗi gói thành một
+sự kiện JSON chuẩn hóa. Các module IDS ở bài sau chỉ cần đọc file JSON Lines, không cần Scapy hay
+byte thô.
+
+```
+Live interface / file PCAP                 (ids/capture.py)
+        |  RawPacket: timestamp + byte thô + linktype
+        v
+Network Parser: Ethernet/VLAN/SLL, IPv4    (ids/parsers/network.py)
+        v
+Transport Parser: TCP, UDP                 (ids/parsers/transport.py)
+        v
+Application Protocol Detector              (ids/detector.py)
+        v
+Application Protocol Parser: HTTP/1.x, DNS, SMTP   (ids/parsers/http.py, dns.py, smtp.py)
+        v
+Normalized IDS Event -> output/events.jsonl        (ids/pipeline.py, ids/output.py)
+```
+
+| Tầng | Giao thức | Ghi chú |
+|---|---|---|
+| Network | IPv4 | Gói không phải IPv4 (ARP, IPv6...) được đánh dấu `UNKNOWN` |
+| Transport | TCP, UDP | TCP có cờ, option và nhãn bắt tay (SYN, SYN/ACK, ACK) |
+| Application | HTTP/1.x, DNS, SMTP | DNS qua cả UDP và TCP; nhận diện theo payload trước, port sau |
+
+Điểm chính:
+
+- **Một pipeline duy nhất** cho cả live capture và PCAP.
+- **Tự parse byte thô** bằng `struct`; Scapy chỉ dùng để bắt gói và đọc file.
+- **Nhận diện giao thức trên port không chuẩn** nhờ kiểm tra nội dung payload (điểm thưởng mục 5).
+- **Không dừng với gói hỏng:** mỗi tầng bắt lỗi riêng và giữ phần đã đọc được. Đã thử với hàng triệu
+  gói bị làm hỏng ngẫu nhiên (`tests/test_robustness.py`).
+- **Không ghi mật khẩu ra log:** thông tin trong `AUTH` của SMTP và header `Authorization` của HTTP
+  được che, payload hex của gói đó cũng bị xóa.
+
 ## Cài đặt
 
 ```bash
@@ -79,6 +116,18 @@ Kết quả unit test của từng module nằm trong các file `TEST/unit_*.txt
 python -m unittest discover -v tests
 ```
 
+## Giới hạn đã biết
+
+- Mỗi gói được xử lý riêng: không ghép luồng TCP, không ghép mảnh IP. Thông điệp HTTP, DNS qua TCP
+  hoặc thư SMTP bị chia qua nhiều gói chỉ được đọc phần nằm trong từng gói.
+- Nhận diện giao thức không nhớ trạng thái kết nối. Gói tiếp nối trên port không chuẩn có thể ra
+  `UNKNOWN`.
+- Không đọc được dữ liệu đã mã hóa: HTTPS, SMTP sau `STARTTLS`, DNS over TLS/HTTPS.
+- Chỉ hỗ trợ IPv4 ở tầng mạng; IPv6 được đánh dấu `UNKNOWN`.
+- HTTP: chưa giải mã body chunked, gzip, URL encoding. SMTP: chưa giải mã MIME.
+- Không kiểm tra checksum TCP/UDP (cần pseudo-header; checksum offload làm sai kết quả khi bắt trên
+  máy gửi). Checksum IPv4 có kiểm tra.
+
 ## Cấu trúc thư mục
 
 ```
@@ -99,6 +148,6 @@ TEST/                # Kết quả unit test, test case (cases/) và script ch�
 
 ## Sử dụng công cụ AI
 
-| Công cụ | Mục đích | Phần mã nguồn |
-|---|---|---|
-| Claude Code | Hướng dẫn từng bước, gợi ý kiến trúc và mã nguồn | `ids/capture.py`, `ids/linktypes.py`, `ids/parsers/errors.py`, `ids/parsers/network.py`, `ids/parsers/transport.py`, `ids/detector.py`, `ids/parsers/http.py`, `ids/parsers/dns.py`, `ids/parsers/smtp.py`, `ids/pipeline.py`, `ids/output.py`, `main.py`, các file trong `tests/`, `TEST/testcases.py` |
+| Công cụ | Mục đích |
+|---|---|
+| Claude Code | Hướng dẫn từng bước, thiết kế kiến trúc, viết mã nguồn và test |
