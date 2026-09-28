@@ -148,6 +148,6 @@ TEST/                # Kết quả unit test, test case (cases/) và script ch�
 
 ## Sử dụng công cụ AI
 
-| Công cụ | Mục đích |
-|---|---|
-| Claude Code | Hướng dẫn từng bước, thiết kế kiến trúc, viết mã nguồn và test |
+| Công cụ | Mục đích | Phần mã nguồn |
+|---|---|---|
+| Claude Code | Hướng dẫn từng bước, thiết kế kiến trúc, viết mã nguồn và test | `ids/`, `main.py`, `tests/`, `TEST/testcases.py` |
